@@ -171,5 +171,5 @@
       padding: 5px;
       font-size: 14px;
     }
-  `,ie([pt({attribute:!1})],ne.prototype,"hass",void 0),ie([ft()],ne.prototype,"_config",void 0),ie([ft()],ne.prototype,"_numericDeviceClasses",void 0),ne=ie([ht("custom-area-card-editor")],ne),console.info("%c AREA-CARD %c 1.0.0 ","color: steelblue; background: black; font-weight: bold;","color: white ; background: dimgray; font-weight: bold;"),window.customCards=window.customCards||[],window.customCards.push({type:"custom-area-card",name:"Custom Area Card",preview:!0,description:"A custom card to display area information."})})();
+  `,ie([pt({attribute:!1})],ne.prototype,"hass",void 0),ie([ft()],ne.prototype,"_config",void 0),ie([ft()],ne.prototype,"_numericDeviceClasses",void 0),ne=ie([ht("custom-area-card-editor")],ne),console.info("%c AREA-CARD %c 0.0.1 ","color: steelblue; background: black; font-weight: bold;","color: white ; background: dimgray; font-weight: bold;"),window.customCards=window.customCards||[],window.customCards.push({type:"custom-area-card",name:"Custom Area Card",preview:!0,description:"A custom card to display area information."})})();
 //# sourceMappingURL=custom-area-card.js.map
