@@ -26,8 +26,6 @@ export interface SelectOption {
     type?: string;
   }
   
-  
-
 
 @customElement("custom-area-card-editor")
 export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEditor {
@@ -254,13 +252,39 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
 
   }
 
-  protected async updated() {
-    if (this.hass && !this._numericDeviceClasses) {
-      const { numeric_device_classes: sensorNumericDeviceClasses } =
-        await getSensorNumericDeviceClasses(this.hass);
-      this._numericDeviceClasses = sensorNumericDeviceClasses;
+  protected async updated(changedProperties: Map<string | number | symbol, unknown>): Promise<void> {
+    super.updated(changedProperties);
+  
+    if (this.hass && this._config && changedProperties.has('_config')) {
+      const previousConfig = changedProperties.get('_config') as CardConfig;  
+      const previousArea = previousConfig?.area;  
+      const currentArea = this._config.area;
+  
+      if (previousArea !== currentArea) {
+        this._config.alert_classes = undefined;
+        this._config.sensor_classes = undefined;
+        this._config.toggle_domains = undefined;
+  
+        this._config.alert_classes = DEVICE_CLASSES.binary_sensor; 
+        this._config.sensor_classes = DEVICE_CLASSES.sensor; 
+        const possibleToggleDomains = this._toggleDomainsForArea(currentArea || "");
+        this._config.toggle_domains = TOGGLE_DOMAINS.filter((domain) =>
+          possibleToggleDomains.includes(domain)
+        );
+  
+        this.requestUpdate();
+      }
+      
+      if (!this._numericDeviceClasses) {
+        const { numeric_device_classes: sensorNumericDeviceClasses } =
+          await getSensorNumericDeviceClasses(this.hass);
+        this._numericDeviceClasses = sensorNumericDeviceClasses;
+      }
     }
   }
+  
+  
+  
 
   private _valueChanged(event: CustomEvent) {
     this._config = event.detail.value;
