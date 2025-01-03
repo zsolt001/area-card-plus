@@ -352,7 +352,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     return html`
       <ha-card>
           <div class="icon-container">
-            <ha-icon style="color: var(--${this._config.area_icon_color || ''}-color);" icon=${this._config.area_icon || area.icon}></ha-icon>
+            <ha-icon style=${this._config?.area_icon_color ? `color: var(--${this._config.area_icon_color}-color);` : nothing} icon=${this._config.area_icon || area.icon}></ha-icon>
           </div>
           <div
             class="container ${classMap({
@@ -379,7 +379,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
                   ? html`
                       <div class="icon-with-count">
                         <ha-state-icon
-                          class="alert" style="color: var(--${this._config?.alert_color || ''}-color);"
+                          class="alert" style=${this._config?.alert_color ? `color: var(--${this._config.alert_color}-color);` : nothing}
                           .icon=${this._getIcon(domain as DomainType, activeCount > 0, deviceClass)}
                         ></ha-state-icon>
                         <span class="active-count  text-small${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
@@ -407,8 +407,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           return html`
             <div class="icon-with-count hover">
               <ha-state-icon
-                style="color: var(--${this._config?.toggle_color || ''}-color);"
-                class=${activeCount > 0 ? "on" : "off"}
+                style=${this._config?.toggle_color ? `color: var(--${this._config.toggle_color}-color);` : nothing}
+                class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
                 .domain=${domain}
                 .icon=${this._getIcon(domain as DomainType, activeCount > 0)}
                 @click=${this._toggle}
@@ -433,8 +433,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         return html`
           <div class="icon-with-count hover">
             <ha-state-icon
-              style="color: var(--${this._config?.toggle_color || ''}-color);"
-              class=${activeCount > 0 ? "on" : "off"}
+              style=${this._config?.toggle_color ? `color: var(--${this._config.toggle_color}-color);` : nothing}
+              class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
               .domain=${domain}
               .icon=${this._getIcon(domain as DomainType, activeCount > 0)}
               @click=${this._toggle}
@@ -452,9 +452,9 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           </div>
           <div class="bottom">
             <div>
-              <div style="color: var(--${this._config.area_name_color || ''}-color);" class="name text-large on">${this._config.area_name || area.name}</div>
+              <div style=${this._config?.area_name_color ? `color: var(--${this._config.area_name_color}-color);` : nothing} class="name text-large on">${this._config.area_name || area.name}</div>
               ${sensors.length
-                ? html`<div class="sensor text-medium" style="color: var(--${this._config?.sensor_color || ''}-color);">${sensors}</div>`
+                ? html`<div class="sensor text-medium off" style=${this._config?.sensor_color ? `color: var(--${this._config.sensor_color}-color);` : nothing}>${sensors}</div>`
                 : ""}
             </div>
             <div class="climate text-small off">
@@ -640,9 +640,6 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         justify-content: center; 
         margin-right: -3px;
       }
-      .sensor {
-        color: var(--secondary-text-color);
-      }  
       .buttons {
         display: flex;
         flex-direction: column;
@@ -670,11 +667,14 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           border-radius: 5px;
           --mdc-icon-size: 20px;
       }
-      .on {
+      .toggle-on {
         color: var(--primary-text-color);
       }
-      .off {
+      .toggle-off {
         color: var(--secondary-text-color) !important;
+      }          
+      .off {
+        color: var(--secondary-text-color);
       }            
       .navigate {
         cursor: pointer;
