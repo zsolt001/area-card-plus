@@ -23,7 +23,7 @@ const ALERT_DOMAINS = ["binary_sensor"];
 
 const CLIMATE_DOMAINS = ["climate"];
 
-const TOGGLE_DOMAINS = ["light", "switch", "fan", "media_player", "lock", "vacuum"];
+export const TOGGLE_DOMAINS = ["light", "switch", "fan", "media_player", "lock", "vacuum"];
 
 export const DEVICE_CLASSES = {
   sensor: ["temperature", "humidity"],
@@ -68,7 +68,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     hass: HomeAssistant
   ): Promise<CardConfig> {
     const areas = await subscribeOne(hass.connection, subscribeAreaRegistry);
-    return { type: "area", area: areas[0]?.area_id || "" };
+    return { type: "custom:custom-area-card", area: areas[0]?.area_id || "" };
   }
 
   @property({ attribute: false }) public hass!: HomeAssistant;
@@ -352,14 +352,13 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     return html`
       <ha-card>
           <div class="icon-container">
-            <ha-icon icon=${area.icon}></ha-icon>
+            <ha-icon style="color: var(--${this._config.area_icon_color || ''}-color);" icon=${this._config.area_icon || area.icon}></ha-icon>
           </div>
-        <div
-          class="container ${classMap({
-            navigate: this._config.navigation_path !== undefined,
-          })}"
-          @click=${this._handleNavigation}
-        >
+          <div
+            class="container ${classMap({
+              navigate: this._config.navigation_path !== undefined && this._config.navigation_path !== "",
+            })}"
+            @click=${this._handleNavigation}>
           <div class="right">
 
           <div class="alerts">
@@ -380,7 +379,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
                   ? html`
                       <div class="icon-with-count">
                         <ha-state-icon
-                          class="alert"
+                          class="alert" style="color: var(--${this._config?.alert_color || ''}-color);"
                           .icon=${this._getIcon(domain as DomainType, activeCount > 0, deviceClass)}
                         ></ha-state-icon>
                         <span class="active-count  text-small${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
@@ -391,61 +390,103 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
             })}
           </div>          
 
-          <div class="buttons">
-            ${TOGGLE_DOMAINS.map((domain) => {
-              if (!(domain in entitiesByDomain)) {
-                return "";
-              }
+<div class="buttons">
+  ${this._config.show_active 
+    ? this._config.toggle_domains?.map((domain: string) => {
+        if (!(domain in entitiesByDomain)) {
+          return nothing;
+        }
 
-              const activeEntities = entitiesByDomain[domain].filter((entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state));
-              const activeCount = activeEntities.length;
+        const activeEntities = entitiesByDomain[domain].filter(
+          (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
+        );
+        const activeCount = activeEntities.length;
 
-              return html`
-              <div class="icon-with-count hover"> 
-                <ha-state-icon
-                  class=${activeCount > 0 ? "on" : "off"}
-                  .domain=${domain}
-                  .icon=${this._getIcon(domain as DomainType, activeCount > 0)}
-                  @click=${this._toggle}
-                ></ha-state-icon>
-                  <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
-                </button>
-                </div>
-              `;
-            })}
+        // Zeige nur, wenn activeCount > 0
+        if (activeCount > 0) {
+          return html`
+            <div class="icon-with-count hover">
+              <ha-state-icon
+                style="color: var(--${this._config?.toggle_color || ''}-color);"
+                class=${activeCount > 0 ? "on" : "off"}
+                .domain=${domain}
+                .icon=${this._getIcon(domain as DomainType, activeCount > 0)}
+                @click=${this._toggle}
+              ></ha-state-icon>
+              <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
+            </div>
+          `;
+        } else {
+          return nothing;
+        }
+      })
+    : this._config.toggle_domains?.map((domain: string) => {
+        if (!(domain in entitiesByDomain)) {
+          return nothing;
+        }
+
+        const activeEntities = entitiesByDomain[domain].filter(
+          (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
+        );
+        const activeCount = activeEntities.length;
+
+        return html`
+          <div class="icon-with-count hover">
+            <ha-state-icon
+              style="color: var(--${this._config?.toggle_color || ''}-color);"
+              class=${activeCount > 0 ? "on" : "off"}
+              .domain=${domain}
+              .icon=${this._getIcon(domain as DomainType, activeCount > 0)}
+              @click=${this._toggle}
+            ></ha-state-icon>
+            <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
           </div>
+        `;
+      })
+  }
+</div>
+
+
+
 
           </div>
           <div class="bottom">
             <div>
-              <div class="name text-large on">${area.name}</div>
+              <div style="color: var(--${this._config.area_name_color || ''}-color);" class="name text-large on">${this._config.area_name || area.name}</div>
               ${sensors.length
                 ? html`<div class="sensor text-medium off">${sensors}</div>`
                 : ""}
             </div>
             <div class="climate text-small off">
-              ${CLIMATE_DOMAINS.map((domain) => {
-                if (!(domain in entitiesByDomain)) {
-                  return "";
-                }
-
-                const entities = entitiesByDomain[domain];
-                const activeTemperatures = entities
-                  .filter(
-                    (entity) =>
-                      !UNAVAILABLE_STATES.includes(entity.state) &&
-                      !STATES_OFF.includes(entity.state)
-                  )
-                  .map((entity) => `${entity.attributes.temperature || "N/A"}°C`);
-
-                if (activeTemperatures.length === 0) {
-                  return "";
-                }
-
-                return html`
-                    (${activeTemperatures.join(", ")})
-                `;
-              })}
+            ${CLIMATE_DOMAINS.map((domain) => {
+              if (!(domain in entitiesByDomain)) {
+                return "";
+              }
+            
+              const entities = entitiesByDomain[domain];
+              const activeTemperatures = entities
+                .filter((entity) => {
+                  const hvacAction = entity.attributes.hvac_action;
+                  const isActive =
+                    !UNAVAILABLE_STATES.includes(entity.state) &&
+                    !STATES_OFF.includes(entity.state);
+                  const isHeatingCooling = hvacAction && (hvacAction !== "idle"  || hvacAction === "off");
+            
+                  return isActive || isHeatingCooling;
+                })
+                .map((entity) => {
+                  const temperature = entity.attributes.temperature || "N/A";
+                  return `${temperature}°C`;
+                });
+            
+              if (activeTemperatures.length === 0) {
+                return "";
+              }
+            
+              return html`
+                (${activeTemperatures.join(", ")})
+              `;
+            })}
             </div>
           </div>
           </div>
@@ -630,7 +671,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         color: var(--primary-text-color);
       }
       .off {
-        color: var(--secondary-text-color);
+        color: var(--secondary-text-color) !important;
       }            
       .navigate {
         cursor: pointer;

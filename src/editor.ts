@@ -3,7 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { computeDomain, HomeAssistant, LovelaceCardEditor, LovelaceCardConfig } from "custom-card-helpers";
 import memoizeOne from "memoize-one";
 import { caseInsensitiveStringCompare, getSensorNumericDeviceClasses } from "./helpers";
-import { DEVICE_CLASSES } from "./card";
+import { DEVICE_CLASSES, TOGGLE_DOMAINS } from "./card";
 
 
 export interface CardConfig extends LovelaceCardConfig {
@@ -38,8 +38,26 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
 
   @state() private _numericDeviceClasses?: string[];
 
-  private _schema = memoizeOne((binaryClasses: SelectOption[],sensorClasses: SelectOption[]) => [
+  private _schema = memoizeOne((binaryClasses: SelectOption[],sensorClasses: SelectOption[], toggleDomains: SelectOption[]) => [
     { name: "area", selector: { area: {} } },
+    {
+      name: "icon_appearance",
+      flatten: true,
+      type: "expandable",
+      icon: "mdi:palette",
+      schema: [
+        { name: "area_icon", selector: { icon: {} } },
+        { name: "area_icon_color", selector: { ui_color: {default_color: "state", include_state: true} } },
+      ]},
+      {
+        name: "name_appearance",
+        flatten: true,
+        type: "expandable",
+        icon: "mdi:palette",
+        schema: [
+          { name: "area_name", selector: { text: {} } },
+          { name: "area_name_color", selector: { ui_color: {default_color: "state", include_state: true} } },
+        ]},      
     {
       name: "",
       type: "grid",
@@ -54,26 +72,63 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
     },
     {
       name: "alert_classes",
-      selector: {
-        select: {
-          reorder: true,
-          multiple: true,
-          custom_value: true,
-          options: binaryClasses,
+      flatten: true,
+      type: "expandable",
+      icon: "mdi:palette",
+      schema: [
+        {
+          name: "alert_classes",
+          selector: {
+            select: {
+              reorder: true,
+              multiple: true,
+              custom_value: true,
+              options: binaryClasses,
+            },
+          },
         },
-      },
-    },
-    {
-      name: "sensor_classes",
-      selector: {
-        select: {
-          reorder: true,
-          multiple: true,
-          custom_value: true,
-          options: sensorClasses,
-        },
-      },
-    },
+        { name: "alert_color", selector: { ui_color: {default_color: "state", include_state: true} } },
+      ]},    
+      {
+        name: "sensor_classes",
+        flatten: true,
+        type: "expandable",
+        icon: "mdi:palette",
+        schema: [
+          {
+            name: "sensor_classes",
+            selector: {
+              select: {
+                reorder: true,
+                multiple: true,
+                custom_value: true,
+                options: sensorClasses,
+              },
+            },
+          },
+          { name: "sensor_color", selector: { ui_color: {default_color: "state", include_state: true} } },
+        ]},       
+        {
+          name: "toggle_domains",
+          flatten: true,
+          type: "expandable",
+          icon: "mdi:palette",
+          schema: [
+            { name: "show_active", selector: { boolean: {} } },
+            {
+              name: "toggle_domains",
+              selector: {
+                select: {
+                  reorder: true,
+                  multiple: true,
+                  custom_value: true,
+                  options: toggleDomains,
+                },
+              },
+            },
+            { name: "toggle_color", selector: { ui_color: {default_color: "state", include_state: true} } },
+            
+          ]},   
   ]);
   
 
@@ -86,35 +141,51 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
       this._classesForArea(area, "sensor", numericDeviceClasses)
   );
 
+  private _toggleDomainsForArea = memoizeOne((area: string): string[] =>
+    this._classesForArea(area, "toggle")
+  );
+
   private _classesForArea(
     area: string,
-    domain: "sensor" | "binary_sensor",
+    domain: "sensor" | "binary_sensor" | "toggle",
     numericDeviceClasses?: string[] | undefined
   ): string[] {
-    
-    const entities = Object.values(this.hass!.entities).filter(
-      (e) =>
-        computeDomain(e.entity_id) === domain &&
-        !e.entity_category &&
-        !e.hidden &&
-        (e.area_id === area ||
-          (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
-    );
-    
-    const classes = entities
-      .map((e) => this.hass!.states[e.entity_id]?.attributes.device_class || "")
-      .filter(
-        (c) =>
-          c &&
-          (domain !== "sensor" ||
-            !numericDeviceClasses ||
-            numericDeviceClasses.includes(c))
+    let entities;
+  
+    if (domain === "toggle") {
+      entities = Object.values(this.hass!.entities).filter(
+        (e) =>
+          TOGGLE_DOMAINS.includes(computeDomain(e.entity_id)) &&
+          !e.hidden &&
+          (e.area_id === area ||
+            (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
       );
-    
-    return [...new Set(classes)];
+  
+      return [...new Set(entities.map((e) => computeDomain(e.entity_id)))];
+      
+    } else {
+      entities = Object.values(this.hass!.entities).filter(
+        (e) =>
+          computeDomain(e.entity_id) === domain &&
+          !e.entity_category &&
+          !e.hidden &&
+          (e.area_id === area ||
+            (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
+      );
+  
+      const classes = entities
+        .map((e) => this.hass!.states[e.entity_id]?.attributes.device_class || "")
+        .filter(
+          (c) =>
+            c &&
+            (domain !== "sensor" ||
+              !numericDeviceClasses ||
+              numericDeviceClasses.includes(c))
+        );
+  
+      return [...new Set(classes)];
+    }
   }
-  
-  
 
   private _buildBinaryOptions = memoizeOne(
     (possibleClasses: string[], currentClasses: string[]): SelectOption[] =>
@@ -126,26 +197,45 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
       this._buildOptions("sensor", possibleClasses, currentClasses)
   );
 
+  private _buildToggleOptions = memoizeOne(
+    (possibleClasses: string[], currentClasses: string[]): SelectOption[] =>
+      this._buildOptions("toggle", possibleClasses, currentClasses)
+  );
+
   private _buildOptions(
-    domain: "sensor" | "binary_sensor",
+    domain: "sensor" | "binary_sensor" | "toggle",
     possibleClasses: string[],
     currentClasses: string[]
   ): SelectOption[] {
-    const options = [...new Set([...possibleClasses, ...currentClasses])].map(
-      (deviceClass) => ({
-        value: deviceClass,
-        label:
-          this.hass!.localize(
-            `component.${domain}.entity_component.${deviceClass}.name`
-          ) || deviceClass,
-      })
-    );
+    let allClasses: string[];
+  
+    if (domain === "toggle") {
+      // Für Toggle-Domains nutzen wir direkt die möglichen und aktuellen Domains
+      allClasses = [...new Set([...possibleClasses, ...currentClasses])];
+    } else {
+      allClasses = [...new Set([...possibleClasses, ...currentClasses])];
+    }
+  
+    const options = allClasses.map((deviceClass) => ({
+      value: deviceClass,
+      label:
+        domain === "toggle"
+          ? this.hass!.localize(
+              `component.${deviceClass}.entity_component._.name`
+            ) || deviceClass
+          : this.hass!.localize(
+              `component.${domain}.entity_component.${deviceClass}.name`
+            ) || deviceClass,
+    }));
+  
     options.sort((a, b) =>
       caseInsensitiveStringCompare(a.label, b.label, this.hass!.locale.language)
     );
-
+  
     return options;
   }
+  
+  
 
 
 
@@ -200,6 +290,33 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
         return this.hass!.localize(
           "ui.panel.lovelace.editor.card.generic.aspect_ratio"
         );
+        case "area_name":
+          return this.hass!.localize(
+            `ui.panel.lovelace.editor.card.generic.name`
+            );         
+        case "area_icon":   
+        return this.hass!.localize(
+              `ui.panel.lovelace.editor.card.generic.icon`
+              );     
+       case "icon_appearance":
+        return this.hass!.localize(`ui.panel.lovelace.editor.card.generic.icon`) + " " + this.hass!.localize(`ui.panel.lovelace.editor.card.tile.appearance`);     
+          case "name_appearance":
+            return this.hass!.localize(`ui.panel.lovelace.editor.card.generic.name`) + " " + this.hass!.localize(`ui.panel.lovelace.editor.card.tile.appearance`); 
+      case "toggle_domains":
+        return this.hass!.localize(`ui.panel.lovelace.editor.cardpicker.domain`);       
+      case "show_active":
+        return this.hass!.localize(`ui.common.hide`) + " " + this.hass!.localize(`ui.components.entity.entity-state-picker.state`) + " " + this.hass!.localize(`component.binary_sensor.entity_component._.state.off`);                          
+      case "color":
+      case "icon_tap_action":
+      case "show_entity_picture":
+      case "vertical":
+      case "hide_state":
+      case "state_content":
+      case "appearance":
+      case "interactions":
+        return this.hass!.localize(
+          `ui.panel.lovelace.editor.card.tile.${schema.name}`
+        );  
       default:
         return this.hass!.localize(
           `ui.panel.lovelace.editor.card.area.${schema.name}`
@@ -221,6 +338,9 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
       this._config.area || "",
       this._numericDeviceClasses
     );
+    const possibleToggleDomains = this._toggleDomainsForArea(
+      this._config.area || ""
+    );
     const binarySelectOptions = this._buildBinaryOptions(
       possibleBinaryClasses,
       this._config.alert_classes || DEVICE_CLASSES.binary_sensor
@@ -229,16 +349,20 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
       possibleSensorClasses,
       this._config.sensor_classes || DEVICE_CLASSES.sensor
     );
-
+    const toggleSelectOptions = this._buildToggleOptions(
+      possibleToggleDomains,
+      this._config.toggle_domains || possibleToggleDomains
+    );
     const schema = this._schema(
       binarySelectOptions,
-      sensorSelectOptions
+      sensorSelectOptions,
+      toggleSelectOptions
     );
 
     const data = {
-      camera_view: "auto",
       alert_classes: DEVICE_CLASSES.binary_sensor,
       sensor_classes: DEVICE_CLASSES.sensor,
+      toggle_domains: possibleToggleDomains,
       ...this._config,
     };
 
