@@ -454,7 +454,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
             <div>
               <div style="color: var(--${this._config.area_name_color || ''}-color);" class="name text-large on">${this._config.area_name || area.name}</div>
               ${sensors.length
-                ? html`<div class="sensor text-medium off">${sensors}</div>`
+                ? html`<div class="sensor text-medium" style="color: var(--${this._config?.sensor_color || ''}-color);">${sensors}</div>`
                 : ""}
             </div>
             <div class="climate text-small off">
@@ -640,6 +640,9 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         justify-content: center; 
         margin-right: -3px;
       }
+      .sensor {
+        color: var(--secondary-text-color);
+      }  
       .buttons {
         display: flex;
         flex-direction: column;
