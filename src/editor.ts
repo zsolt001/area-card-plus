@@ -255,36 +255,35 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
   protected async updated(changedProperties: Map<string | number | symbol, unknown>): Promise<void> {
     super.updated(changedProperties);
   
-    if (this.hass && this._config && changedProperties.has('_config')) {
-      const previousConfig = changedProperties.get('_config') as CardConfig;  
-      const previousArea = previousConfig?.area;  
+    if (!this.hass || !this._config) {
+      return;
+    }
+  
+    if (changedProperties.has("_config")) {
+      const previousConfig = changedProperties.get("_config") as CardConfig | undefined;
+      const previousArea = previousConfig?.area;
       const currentArea = this._config.area;
   
-      if (previousArea !== currentArea) {
-        this._config.alert_classes = undefined;
-        this._config.sensor_classes = undefined;
-        this._config.toggle_domains = undefined;
+      if (previousArea !== currentArea && previousArea !== undefined) {
   
-        this._config.alert_classes = DEVICE_CLASSES.binary_sensor; 
-        this._config.sensor_classes = DEVICE_CLASSES.sensor; 
-        const possibleToggleDomains = this._toggleDomainsForArea(currentArea || "");
-        this._config.toggle_domains = TOGGLE_DOMAINS.filter((domain) =>
-          possibleToggleDomains.includes(domain)
+        const possibleToggleDomains = this._toggleDomainsForArea(currentArea);
+  
+        const sortedToggleDomains = possibleToggleDomains.sort(
+          (a, b) => TOGGLE_DOMAINS.indexOf(a) - TOGGLE_DOMAINS.indexOf(b)
         );
+  
+        this._config.toggle_domains = [...sortedToggleDomains];
   
         this.requestUpdate();
       }
-      
-      if (!this._numericDeviceClasses) {
-        const { numeric_device_classes: sensorNumericDeviceClasses } =
-          await getSensorNumericDeviceClasses(this.hass);
-        this._numericDeviceClasses = sensorNumericDeviceClasses;
-      }
+    }
+  
+    if (!this._numericDeviceClasses) {
+      const { numeric_device_classes: sensorNumericDeviceClasses } =
+        await getSensorNumericDeviceClasses(this.hass);
+      this._numericDeviceClasses = sensorNumericDeviceClasses;
     }
   }
-  
-  
-  
 
   private _valueChanged(event: CustomEvent) {
     this._config = event.detail.value;
