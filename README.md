@@ -27,7 +27,7 @@ https://github.com/xBourner/area-card
 All settings are optional. The card should work without setting any parameters in yaml or via GUI. 
 
 ```yaml
-type: custom:area-card
+type: custom:custom-area-card
 area: living_room 
 ```
 
