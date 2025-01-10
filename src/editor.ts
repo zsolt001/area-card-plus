@@ -427,6 +427,12 @@ private _itemChanged(ev: CustomEvent<EntitySettings>) {
     }
 }
 
+public get toggleSelectOptions(): SelectOption[] {
+  return this._buildToggleOptions(
+    this._toggleDomainsForArea(this._config!.area || ""),
+    this._config?.toggle_domains || this._toggleDomainsForArea(this._config!.area || "")
+  );
+}
 
 
   protected render() {
@@ -452,14 +458,11 @@ private _itemChanged(ev: CustomEvent<EntitySettings>) {
       possibleSensorClasses,
       this._config.sensor_classes || DEVICE_CLASSES.sensor
     );
-    const toggleSelectOptions = this._buildToggleOptions(
-      possibleToggleDomains,
-      this._config.toggle_domains || possibleToggleDomains
-    );
+
     const schema = this._schema(
       binarySelectOptions,
       sensorSelectOptions,
-      toggleSelectOptions
+      this.toggleSelectOptions
     );
 
     const data = {
@@ -483,6 +486,7 @@ private _itemChanged(ev: CustomEvent<EntitySettings>) {
             <distribution-card-items-editor
                 .hass=${this.hass}
                 .customization=${this._config.customization}
+                .toggleSelectOptions=${this.toggleSelectOptions}
                 @edit-item=${this._edit_item}
                 @config-changed=${this._customizationChanged}
             >

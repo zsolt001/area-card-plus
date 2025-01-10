@@ -8,6 +8,7 @@ import { css, CSSResult, nothing } from 'lit';
 import { mdiClose, mdiPencil, mdiPlusCircleOutline } from '@mdi/js';
 import { PresetList, PresetObject } from './helpers';
 import { fireEvent } from './helpers';
+import { SelectOption } from './editor';
 
 
 @customElement('distribution-card-items-editor')
@@ -15,6 +16,9 @@ export class ItemsEditor extends LitElement {
   @property({ attribute: false }) customization?: EntitySettings[];
 
   @property({ attribute: false }) hass?: HomeAssistant;
+
+  @property({ type: Array }) toggleSelectOptions: SelectOption[] = [];
+
 
   private _entityKeys = new WeakMap<EntitySettings, string>();
 
@@ -39,22 +43,20 @@ export class ItemsEditor extends LitElement {
           this.customization,
           (conf) => this._getKey(conf),
           (conf, index) => html`
-            <div class="entity">
-              <div class="handle">
-                <ha-icon icon="mdi:drag"></ha-icon>
-              </div>
+            <div class="customize-item">
 
               <ha-select
-                label="Preset"
-                name="preset"
-                class="select-preset"
+                label="Customize"
+                name="Customize"
+                class="select-customization"
                 naturalMenuWidth
                 fixedMenuPosition
                 .value=${conf.domain}
                 @closed=${(ev: any) => ev.stopPropagation()}
                 @value-changed=${this._valueChanged}
               >
-                ${PresetList.map((val) => html`<mwc-list-item .value=${val}>${val}</mwc-list-item>`)}
+               ${this.toggleSelectOptions.map((option) =>html`<mwc-list-item .value=${option.value}>${option.label}</mwc-list-item>`)}
+
               </ha-select>
 
               <ha-icon-button
@@ -79,22 +81,17 @@ export class ItemsEditor extends LitElement {
 
       <div class="add-item row">
         <ha-select
-          label="Preset"
-          name="preset"
-          class="add-preset"
+          label="Customize"
+          name="Customize"
+          class="add-customization"
           naturalMenuWidth
           fixedMenuPosition
           @closed=${(ev: any) => ev.stopPropagation()}
+          @click=${this._addRow}
         >
-          ${PresetList.map((val) => html`<mwc-list-item .value=${val}>${val}</mwc-list-item>`)}
+        ${this.toggleSelectOptions.map((option) =>html`<mwc-list-item .value=${option.value}>${option.label}</mwc-list-item>`)}
         </ha-select>
 
-        <ha-icon-button
-          .label="Add"
-          .path=${mdiPlusCircleOutline}
-          class="add-icon"
-          @click="${this._addRow}"
-        ></ha-icon-button>
       </div>
     `;
   }
@@ -140,7 +137,7 @@ export class ItemsEditor extends LitElement {
       return;
     }
 
-    const selectElement = this.shadowRoot!.querySelector('.add-preset') as HTMLElementValue;
+    const selectElement = this.shadowRoot!.querySelector('.add-customization') as HTMLElementValue;
     if (!selectElement || !selectElement.value) {
       return;
     }
@@ -248,35 +245,39 @@ export class ItemsEditor extends LitElement {
         color: var(--secondary-text-color);
         cursor: pointer;
       }
-      .entity,
+      .customize-item,
       .add-item {
         display: flex;
         align-items: center;
       }
-      .entity {
+      .customize-item {
         display: flex;
         align-items: center;
       }
-      .entity .handle {
+      .customize-item .handle {
         padding-right: 8px;
         cursor: move;
         padding-inline-end: 8px;
         padding-inline-start: initial;
         direction: var(--direction);
       }
-      .entity .handle > * {
+      .customize-item .handle > * {
         pointer-events: none;
       }
-      .entity ha-entity-picker,
+      .customize-item ha-entity-picker,
       .add-item ha-entity-picker {
         flex-grow: 1;
       }
-      .entities {
+      .customization {
         margin-bottom: 8px;
       }
-      .add-preset, .select-preset {
+      .add-customization, .select-customization {
         padding-right: 8px;
         width: 100%;
+        margin-top: 8px;
+      }
+      .add-customization {
+        padding-right: 0px;
       }
       .remove-icon,
       .edit-icon,
