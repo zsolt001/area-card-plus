@@ -1,9 +1,13 @@
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { computeDomain, HomeAssistant, LovelaceCardEditor, LovelaceCardConfig } from "custom-card-helpers";
 import memoizeOne from "memoize-one";
-import { caseInsensitiveStringCompare, getSensorNumericDeviceClasses } from "./helpers";
+import { caseInsensitiveStringCompare, getSensorNumericDeviceClasses, HassCustomElement, SubElementConfig, EntitySettings, fireEvent } from "./helpers";
 import { DEVICE_CLASSES, TOGGLE_DOMAINS } from "./card";
+
+
+import './items-editor';
+import './item-editor';
 
 
 export interface CardConfig extends LovelaceCardConfig {
@@ -26,6 +30,7 @@ export interface SelectOption {
     type?: string;
   }
   
+  
 
 @customElement("custom-area-card-editor")
 export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEditor {
@@ -36,6 +41,7 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
 
   @state() private _numericDeviceClasses?: string[];
 
+  
   private _schema = memoizeOne((binaryClasses: SelectOption[],sensorClasses: SelectOption[], toggleDomains: SelectOption[]) => [
     { name: "area", selector: { area: {} } },
     {
@@ -129,6 +135,18 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
           ]},   
   ]);
   
+
+  protected async firstUpdated(): Promise<void> {
+    if (!customElements.get('ha-form') || !customElements.get('hui-action-editor')) {
+      (customElements.get('hui-button-card') as HassCustomElement)?.getConfigElement();
+    }
+
+    if (!customElements.get('ha-entity-picker')) {
+      (customElements.get('hui-entities-card') as HassCustomElement)?.getConfigElement();
+    }
+
+    console.log(this.hass);
+  }
 
   private _binaryClassesForArea = memoizeOne((area: string): string[] =>
     this._classesForArea(area, "binary_sensor")
@@ -248,9 +266,12 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
   `;
 
   setConfig(config: CardConfig): void {
-    this._config = config;
+    this._config = {
+        ...config,
+        customization: config.customization || []
+    };
+}
 
-  }
 
   protected async updated(changedProperties: Map<string | number | symbol, unknown>): Promise<void> {
     super.updated(changedProperties);
@@ -347,6 +368,65 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
     }
   };
   
+  private _edit_item(ev: CustomEvent<number>): void {
+    ev.stopPropagation();
+    if (!this._config || !this.hass) {
+        return;
+    }
+    const index = ev.detail;
+
+    this._subElementEditor = {
+        index: index,
+    };
+}
+
+@state() private _subElementEditor: SubElementConfig | undefined = undefined;
+
+private _customizationChanged(ev: CustomEvent<EntitySettings[]>): void {
+    ev.stopPropagation();
+    if (!this._config || !this.hass) {
+        return;
+    }
+    fireEvent(this, 'config-changed', {
+        config: { ...this._config, customization: ev.detail } as CardConfig,
+    });
+}
+
+private _renderSubElementEditor() {
+    return html`
+        <div class="header">
+            <div class="back-title">
+                <mwc-icon-button @click=${this._goBack}>
+                    <ha-icon icon="mdi:arrow-left"></ha-icon>
+                </mwc-icon-button>
+            </div>
+        </div>
+        <distribution-card-item-editor
+            .hass=${this.hass}
+            .config=${this._config?.customization?.[this._subElementEditor?.index ?? 0] ?? {}}
+            @config-changed=${this._itemChanged}
+        >
+        </distribution-card-item-editor>
+    `;
+}
+
+private _goBack(): void {
+    this._subElementEditor = undefined;
+}
+
+private _itemChanged(ev: CustomEvent<EntitySettings>) {
+    ev.stopPropagation();
+    if (!this._config || !this.hass) {
+        return;
+    }
+    const index = this._subElementEditor?.index;
+    if (index != undefined) {
+        const customization = [...this._config.customization];
+        customization[index] = ev.detail;
+        fireEvent(this, 'config-changed', { config: { ...this._config, customization: customization } });
+    }
+}
+
 
 
   protected render() {
@@ -389,6 +469,8 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
       ...this._config,
     };
 
+    if (this._subElementEditor) return this._renderSubElementEditor();
+
     return html`
       <ha-form
         .hass=${this.hass}
@@ -397,7 +479,19 @@ export class CustomAreaCardEditor extends LitElement  implements LovelaceCardEdi
         .computeLabel=${this._computeLabelCallback}
         @value-changed=${this._valueChanged}
       ></ha-form>
+        <div class="card-config">
+            <distribution-card-items-editor
+                .hass=${this.hass}
+                .customization=${this._config.customization}
+                @edit-item=${this._edit_item}
+                @config-changed=${this._customizationChanged}
+            >
+            </distribution-card-items-editor>
+        </div>
+        
     `;
   }
   
-}
+
+} 
+

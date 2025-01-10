@@ -397,6 +397,14 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           return nothing;
         }
 
+        // Prüfen, ob es eine individuelle Farbe für die Domain gibt
+        const customization = this._config?.customization?.find(
+          (item: { domain: string }) => item.domain === domain
+        );
+        const domainColor = customization?.color;
+        const domainIcon = customization?.icon;
+
+
         const activeEntities = entitiesByDomain[domain].filter(
           (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
         );
@@ -407,10 +415,10 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           return html`
             <div class="icon-with-count hover">
               <ha-state-icon
-                style=${this._config?.toggle_color ? `color: var(--${this._config.toggle_color}-color);` : nothing}
+                style=${domainColor ? `color: var(--${domainColor}-color);` : nothing}
                 class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
                 .domain=${domain}
-                .icon=${this._getIcon(domain as DomainType, activeCount > 0)}
+                .icon=${domainIcon? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
                 @click=${this._toggle}
               ></ha-state-icon>
               <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
@@ -425,6 +433,13 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           return nothing;
         }
 
+        // Prüfen, ob es eine individuelle Farbe für die Domain gibt
+        const customization = this._config?.customization?.find(
+          (item: { domain: string }) => item.domain === domain
+        );
+        const domainColor = customization?.color;
+        const domainIcon = customization?.icon;
+
         const activeEntities = entitiesByDomain[domain].filter(
           (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
         );
@@ -433,10 +448,10 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         return html`
           <div class="icon-with-count hover">
             <ha-state-icon
-              style=${this._config?.toggle_color ? `color: var(--${this._config.toggle_color}-color);` : nothing}
+              style=${domainColor ? `color: var(--${domainColor}-color);` : nothing}
               class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
               .domain=${domain}
-              .icon=${this._getIcon(domain as DomainType, activeCount > 0)}
+              .icon=${domainIcon? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
               @click=${this._toggle}
             ></ha-state-icon>
             <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
@@ -445,6 +460,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       })
   }
 </div>
+
 
 
 
