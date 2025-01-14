@@ -9,9 +9,8 @@ import { property} from "lit/decorators.js";
 
 export interface SubElementConfig {
   index?: number;
+  type?: string;
 }
-
-
 
 export interface HassCustomElement extends CustomElementConstructor {
   getConfigElement(): Promise<unknown>;
@@ -26,52 +25,10 @@ export interface EditorTarget extends EventTarget {
   config: ActionConfig;
 }
 
-export interface EntitySettings extends presetFeatures {
-  attribute?: string;
-  arrow_color?: { bigger?: string; equal?: string; smaller?: string };
-  calc_excluded?: boolean;
-  consumer?: boolean;
-  color_threshold?: number;
-  decimals?: number;
-  display_abs?: boolean;
-  double_tap_action?: ActionConfig;
-  entity?: string;
-  hide_arrows?: boolean;
-  icon?: string;
-  icon_color?: { bigger?: string; equal?: string; smaller?: string };
-  invert_value?: boolean;
-  invert_arrow?: boolean;
-  name?: string | undefined;
-  preset?: PresetType;
-  producer?: boolean;
-  secondary_info_attribute?: string;
-  secondary_info_entity?: string;
-  secondary_info_replace_name?: boolean;
-  tap_action?: ActionConfig;
-  threshold?: number;
-  unit_of_display?: string;
-  area?: string;
-  unit_of_measurement?: string;
-  [key: string]: any;
+export interface Settings {
+  type: string;
 }
 
-
-export interface presetFeatures {
-  battery_percentage_entity?: string;
-  grid_sell_entity?: string;
-  grid_buy_entity?: string;
-}
-
-export type PresetType = (typeof PresetList)[number];
-
-export const PresetList = [
-  'light',
-  'switch',
-  'fan',
-  'media_player',
-  'lock',
-  'vacuum',
-] as const;
 
 
 export interface RegistryEntry {
@@ -134,68 +91,6 @@ export interface EntityRegistryEntry extends RegistryEntry {
 export interface HTMLElementValue extends HTMLElement {
   value: string;
 }
-
-export const PresetObject: { [key: string]: EntitySettings } = {
-  battery: {
-    consumer: true,
-    icon: 'mdi:battery-outline',
-    name: 'battery',
-    producer: true,
-  },
-  car_charger: {
-    consumer: true,
-    icon: 'mdi:car-electric',
-    name: 'car',
-  },
-  consumer: {
-    consumer: true,
-    icon: 'mdi:lightbulb',
-    name: 'consumer',
-  },
-  grid: {
-    icon: 'mdi:transmission-tower',
-    name: 'grid',
-  },
-  home: {
-    consumer: true,
-    icon: 'mdi:home-assistant',
-    name: 'home',
-  },
-  hydro: {
-    icon: 'mdi:hydro-power',
-    name: 'hydro',
-    producer: true,
-  },
-  pool: {
-    consumer: true,
-    icon: 'mdi:pool',
-    name: 'pool',
-  },
-  producer: {
-    icon: 'mdi:lightning-bolt-outline',
-    name: 'producer',
-    producer: true,
-  },
-  solar: {
-    icon: 'mdi:solar-power',
-    name: 'solar',
-    producer: true,
-  },
-  wind: {
-    icon: 'mdi:wind-turbine',
-    name: 'wind',
-    producer: true,
-  },
-  heating: {
-    icon: 'mdi:radiator',
-    name: 'heating',
-    consumer: true,
-  },
-  placeholder: {
-    name: 'placeholder',
-  },
-};
-
 
 
 export type Constructor<T = any> = new (...args: any[]) => T;

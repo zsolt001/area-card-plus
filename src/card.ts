@@ -5,8 +5,10 @@ import memoizeOne from "memoize-one";
 import { HomeAssistant, LovelaceCard, LovelaceCardConfig } from "custom-card-helpers";
 import type { HassEntity, UnsubscribeFunc } from "home-assistant-js-websocket";
 import { computeDomain, navigate, applyThemesOnElement, formatNumber } from "custom-card-helpers";
-import { AreaRegistryEntry, DeviceRegistryEntry, EntityRegistryEntry, subscribeAreaRegistry, subscribeDeviceRegistry, subscribeEntityRegistry,
-    subscribeOne, SubscribeMixin, isNumericState, blankBeforeUnit} from "./helpers";
+import {
+  AreaRegistryEntry, DeviceRegistryEntry, EntityRegistryEntry, subscribeAreaRegistry, subscribeDeviceRegistry, subscribeEntityRegistry,
+  subscribeOne, SubscribeMixin, isNumericState, blankBeforeUnit
+} from "./helpers";
 
 export interface CardConfig extends LovelaceCardConfig {
   area: string;
@@ -31,7 +33,7 @@ export const DEVICE_CLASSES = {
 };
 
 
-type DomainType = "light" | "switch" | "fan" | "climate" | "media_player" | "lock" | "vacuum" | "binary_sensor" ;
+type DomainType = "light" | "switch" | "fan" | "climate" | "media_player" | "lock" | "vacuum" | "binary_sensor";
 
 const DOMAIN_ICONS = {
   light: { on: "mdi:lightbulb-multiple", off: "mdi:lightbulb-multiple-off" },
@@ -58,7 +60,7 @@ const DOMAIN_ICONS = {
 };
 
 @customElement("custom-area-card")
-export class CustomAreaCard extends SubscribeMixin(LitElement) implements LovelaceCard{
+export class CustomAreaCard extends SubscribeMixin(LitElement) implements LovelaceCard {
 
   static getConfigElement() {
     return document.createElement("custom-area-card-editor");
@@ -91,20 +93,20 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       states: HomeAssistant["states"]
     ) => {
       const entitiesInArea = registryEntities
-      .filter(
-        (entry) =>
-          !entry.hidden_by &&
-          (entry.area_id
-            ? entry.area_id === areaId
-            : entry.device_id && devicesInArea.has(entry.device_id))
-      )
-      .map((entry) => entry.entity_id);
-  
+        .filter(
+          (entry) =>
+            !entry.hidden_by &&
+            (entry.area_id
+              ? entry.area_id === areaId
+              : entry.device_id && devicesInArea.has(entry.device_id))
+        )
+        .map((entry) => entry.entity_id);
+
       const entitiesByDomain: { [domain: string]: HassEntity[] } = {};
-  
+
       for (const entity of entitiesInArea) {
-        const domain = computeDomain(entity); 
-  
+        const domain = computeDomain(entity);
+
         if (
           !TOGGLE_DOMAINS.includes(domain) &&
           !SENSOR_DOMAINS.includes(domain) &&
@@ -113,29 +115,29 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         ) {
           continue;
         }
-  
+
         const stateObj: HassEntity | undefined = states[entity];
         if (!stateObj) {
           continue;
         }
-  
+
         if (
           (ALERT_DOMAINS.includes(domain) || SENSOR_DOMAINS.includes(domain)) &&
           !deviceClasses[domain].includes(stateObj.attributes.device_class || "")
         ) {
           continue;
         }
-  
+
         if (!(domain in entitiesByDomain)) {
           entitiesByDomain[domain] = [];
         }
         entitiesByDomain[domain].push(stateObj);
       }
-  
+
       return entitiesByDomain;
     }
   );
-  
+
   private _isOn(domain: string, deviceClass?: string): HassEntity | undefined {
     const entities = this._entitiesByDomain(
       this._config!.area,
@@ -150,8 +152,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     return (
       deviceClass
         ? entities.filter(
-            (entity) => entity.attributes.device_class === deviceClass
-          )
+          (entity) => entity.attributes.device_class === deviceClass
+        )
         : entities
     ).find(
       (entity) =>
@@ -205,8 +207,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       new Set(
         areaId
           ? devices
-              .filter((device) => device.area_id === areaId)
-              .map((device) => device.id)
+            .filter((device) => device.area_id === areaId)
+            .map((device) => device.id)
           : []
       )
   );
@@ -228,7 +230,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
   public getCardSize(): number {
     return 3;
   }
-  
+
   public setConfig(config: CardConfig): void {
     if (!config.area) {
       throw new Error("Area Required");
@@ -328,27 +330,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       `;
     }
 
-    const sensors: string[] = [];
-    SENSOR_DOMAINS.forEach((domain) => {
-      if (!(domain in entitiesByDomain)) {
-        return;
-      }
-      this._deviceClasses[domain].forEach((deviceClass) => {
-        if (
-          entitiesByDomain[domain].some(
-            (entity) => entity.attributes.device_class === deviceClass
-          )
-        ) {
-          const average = this._average(domain, deviceClass);
-          if (sensors.length > 0) {
-            sensors.push(` - ${average}`); 
-          } else {
-            sensors.push(average as string);
-          }
-        }
-      });
-    });
-    
+
+
     return html`
       <ha-card>
           <div class="icon-container">
@@ -356,153 +339,195 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           </div>
           <div
             class="container ${classMap({
-              navigate: this._config.navigation_path !== undefined && this._config.navigation_path !== "",
-            })}"
+      navigate: this._config.navigation_path !== undefined && this._config.navigation_path !== "",
+    })}"
             @click=${this._handleNavigation}>
           <div class="right">
 
           <div class="alerts">
             ${ALERT_DOMAINS.map((domain) => {
-              if (!(domain in entitiesByDomain)) {
-                return nothing;
-              }
+      if (!(domain in entitiesByDomain)) {
+        return nothing;
+      }
 
-              return this._deviceClasses[domain].map((deviceClass) => {
-                const activeEntities = entitiesByDomain[domain].filter((entity) => {
-                  const entityDeviceClass = entity.attributes.device_class || "default";
-                  return entityDeviceClass === deviceClass && entity.state === "on";
-                });
 
-                const activeCount = activeEntities.length; 
 
-                return activeCount > 0
-                  ? html`
+      return this._deviceClasses[domain].map((deviceClass) => {
+        const activeEntities = entitiesByDomain[domain].filter((entity) => {
+          const entityDeviceClass = entity.attributes.device_class || "default";
+          return entityDeviceClass === deviceClass && entity.state === "on";
+        });
+
+        const customization = this._config?.customization_alert?.find(
+          (item: { type: string }) => item.type === deviceClass
+        );
+        const alertColor = customization?.color;
+        const alertIcon = customization?.icon;
+
+        const activeCount = activeEntities.length;
+
+        return activeCount > 0
+          ? html`
                       <div class="icon-with-count">
                         <ha-state-icon
-                          class="alert" style=${this._config?.alert_color ? `color: var(--${this._config.alert_color}-color);` : nothing}
-                          .icon=${this._getIcon(domain as DomainType, activeCount > 0, deviceClass)}
+                          class="alert" style=${alertColor ? `color: var(--${alertColor}-color);` : this._config?.alert_color ? `color: ${this._config.alert_color};` : nothing}
+                          .icon=${alertIcon ? alertIcon : this._getIcon(domain as DomainType, activeCount > 0, deviceClass)}
                         ></ha-state-icon>
                         <span class="active-count  text-small${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
                       </div>
                     `
-                  : nothing;
-              });
-            })}
+          : nothing;
+      });
+    })}
           </div>          
 
 <div class="buttons">
-  ${this._config.show_active 
-    ? this._config.toggle_domains?.map((domain: string) => {
-        if (!(domain in entitiesByDomain)) {
-          return nothing;
-        }
+  ${this._config.show_active
+        ? this._config.toggle_domains?.map((domain: string) => {
+          if (!(domain in entitiesByDomain)) {
+            return nothing;
+          }
 
-        // Prüfen, ob es eine individuelle Farbe für die Domain gibt
-        const customization = this._config?.customization?.find(
-          (item: { domain: string }) => item.domain === domain
-        );
-        const domainColor = customization?.color;
-        const domainIcon = customization?.icon;
+          const customization = this._config?.customization_domain?.find(
+            (item: { type: string }) => item.type === domain
+          );
+          const domainColor = customization?.color;
+          const domainIcon = customization?.icon;
 
 
-        const activeEntities = entitiesByDomain[domain].filter(
-          (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
-        );
-        const activeCount = activeEntities.length;
+          const activeEntities = entitiesByDomain[domain].filter(
+            (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
+          );
+          const activeCount = activeEntities.length;
 
-        // Zeige nur, wenn activeCount > 0
-        if (activeCount > 0) {
-          return html`
+          if (activeCount > 0) {
+            return html`
             <div class="icon-with-count hover">
               <ha-state-icon
-                style=${domainColor ? `color: var(--${domainColor}-color);` : nothing}
+                style=${domainColor ? `color: var(--${domainColor}-color);` : this._config?.domain_color ? `color: ${this._config.domain_color};` : nothing}
                 class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
                 .domain=${domain}
-                .icon=${domainIcon? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
+                .icon=${domainIcon ? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
                 @click=${this._toggle}
               ></ha-state-icon>
               <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
             </div>
           `;
-        } else {
-          return nothing;
-        }
-      })
-    : this._config.toggle_domains?.map((domain: string) => {
-        if (!(domain in entitiesByDomain)) {
-          return nothing;
-        }
+          } else {
+            return nothing;
+          }
+        })
+        : this._config.toggle_domains?.map((domain: string) => {
+          if (!(domain in entitiesByDomain)) {
+            return nothing;
+          }
 
-        // Prüfen, ob es eine individuelle Farbe für die Domain gibt
-        const customization = this._config?.customization?.find(
-          (item: { domain: string }) => item.domain === domain
-        );
-        const domainColor = customization?.color;
-        const domainIcon = customization?.icon;
+          const customization = this._config?.customization_domain?.find(
+            (item: { type: string }) => item.type === domain
+          );
+          const domainColor = customization?.color;
+          const domainIcon = customization?.icon;
 
-        const activeEntities = entitiesByDomain[domain].filter(
-          (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
-        );
-        const activeCount = activeEntities.length;
+          const activeEntities = entitiesByDomain[domain].filter(
+            (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
+          );
+          const activeCount = activeEntities.length;
 
-        return html`
+          return html`
           <div class="icon-with-count hover">
             <ha-state-icon
-              style=${domainColor ? `color: var(--${domainColor}-color);` : nothing}
+              style=${domainColor ? `color: var(--${domainColor}-color);` : this._config?.domain_color ? `color: ${this._config.domain_color};` : nothing}
               class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
               .domain=${domain}
-              .icon=${domainIcon? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
+              .icon=${domainIcon ? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
               @click=${this._toggle}
             ></ha-state-icon>
             <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
           </div>
         `;
-      })
-  }
+        })
+      }
 </div>
-
-
-
-
-
           </div>
           <div class="bottom">
             <div>
               <div style=${this._config?.area_name_color ? `color: var(--${this._config.area_name_color}-color);` : nothing} class="name text-large on">${this._config.area_name || area.name}</div>
-              ${sensors.length
-                ? html`<div class="sensor text-medium off" style=${this._config?.sensor_color ? `color: var(--${this._config.sensor_color}-color);` : nothing}>${sensors}</div>`
-                : ""}
+              <div class="sensors">
+                ${SENSOR_DOMAINS.map((domain) => {
+        if (!(domain in entitiesByDomain)) {
+          return nothing;
+        }
+
+        const sensorElements = this._deviceClasses[domain]
+          .map((deviceClass, index, array) => {
+            const matchingEntities = entitiesByDomain[domain].filter(
+              (entity) => entity.attributes.device_class === deviceClass
+            );
+
+            if (matchingEntities.length === 0) {
+              return nothing;
+            }
+
+            const average = this._average(domain, deviceClass);
+
+            const customization = this._config?.customization_sensor?.find(
+              (item: { type: string }) => item.type === deviceClass
+            );
+            const sensorColor = customization?.color || this._config?.sensor_color;
+
+            return html`
+                        <span
+                          class="sensor-value"
+                          style=${sensorColor ? `color: var(--${sensorColor}-color);` : nothing}
+                        >
+                          ${index > 0 ? " - " : ""}${average}
+                        </span>
+                      `;
+          })
+          .filter((element) => element !== nothing);
+
+        if (sensorElements.length === 0) {
+          return nothing;
+        }
+
+        return html`
+                    <div class="sensor text-medium off">
+                      ${sensorElements}
+                    </div>
+                  `;
+      })}
+              </div>
             </div>
             <div class="climate text-small off">
             ${CLIMATE_DOMAINS.map((domain) => {
-              if (!(domain in entitiesByDomain)) {
-                return "";
-              }
-            
-              const entities = entitiesByDomain[domain];
-              const activeTemperatures = entities
-                .filter((entity) => {
-                  const hvacAction = entity.attributes.hvac_action;
-                  const isActive =
-                    !UNAVAILABLE_STATES.includes(entity.state) &&
-                    !STATES_OFF.includes(entity.state);
-                  const isHeatingCooling = hvacAction && (hvacAction !== "idle"  || hvacAction === "off");
-            
-                  return isActive || isHeatingCooling;
-                })
-                .map((entity) => {
-                  const temperature = entity.attributes.temperature || "N/A";
-                  return `${temperature}°C`;
-                });
-            
-              if (activeTemperatures.length === 0) {
-                return "";
-              }
-            
-              return html`
+        if (!(domain in entitiesByDomain)) {
+          return "";
+        }
+
+        const entities = entitiesByDomain[domain];
+        const activeTemperatures = entities
+          .filter((entity) => {
+            const hvacAction = entity.attributes.hvac_action;
+            const isActive =
+              !UNAVAILABLE_STATES.includes(entity.state) &&
+              !STATES_OFF.includes(entity.state);
+            const isHeatingCooling = hvacAction && (hvacAction !== "idle" || hvacAction === "off");
+
+            return isActive || isHeatingCooling;
+          })
+          .map((entity) => {
+            const temperature = entity.attributes.temperature || "N/A";
+            return `${temperature}°C`;
+          });
+
+        if (activeTemperatures.length === 0) {
+          return "";
+        }
+
+        return html`
                 (${activeTemperatures.join(", ")})
               `;
-            })}
+      })}
             </div>
           </div>
           </div>
@@ -511,7 +536,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       </ha-card>
     `;
   }
-  
+
 
   protected updated(changedProps: PropertyValues): void {
     super.updated(changedProps);
@@ -533,7 +558,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
 
   private _handleNavigation() {
     if (this._config!.navigation_path) {
-      navigate(undefined,this._config!.navigation_path);
+      navigate(undefined, this._config!.navigation_path);
     }
   }
 
@@ -541,7 +566,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
   private _toggle(ev: Event) {
     ev.stopPropagation();
     const domain = (ev.currentTarget as any).domain as string;
-  
+
     if (domain === "media_player") {
       this.hass.callService(
         domain,
@@ -551,7 +576,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           area_id: this._config!.area,
         }
       );
-    } 
+    }
     else if (domain === "lock") {
       this.hass.callService(
         domain,
@@ -561,7 +586,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           area_id: this._config!.area,
         }
       );
-    }    
+    }
     else if (domain === "vacuum") {
       this.hass.callService(
         domain,
@@ -571,7 +596,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           area_id: this._config!.area,
         }
       );
-    }       
+    }
     else if (TOGGLE_DOMAINS.includes(domain)) {
       this.hass.callService(
         domain,
@@ -587,7 +612,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
   _getIcon(domain: DomainType, on: boolean, deviceClass?: string): string {
     if (domain in DOMAIN_ICONS) {
       const icons = DOMAIN_ICONS[domain];
-  
+
       if (deviceClass && typeof icons === "object" && !(icons as { on: string; off: string }).on) {
         const deviceClassIcons = icons as Record<string, string>;
         if (deviceClass in deviceClassIcons) {
@@ -599,12 +624,12 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         return on ? icons.on : icons.off;
       }
     }
-  
-    return ""; 
+
+    return "";
   }
-  
-  
-  
+
+
+
   static get styles() {
     return css`
       ha-card {
@@ -709,8 +734,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       }  
     `;
   }
-  
-  
 
-  
+
+
+
 }
