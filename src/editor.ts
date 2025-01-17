@@ -45,6 +45,7 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
 
   private _schema = memoizeOne(() => [
     { name: "area", selector: { area: {} } },
+    { name: "columns", selector: { number: { min: 1, max: 4, mode: "box"} } },
     {
       name: "icon_appearance",
       flatten: true,

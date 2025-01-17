@@ -13,6 +13,7 @@ import {
 export interface CardConfig extends LovelaceCardConfig {
   area: string;
   navigation_path?: string;
+  columns?: number;
 }
 
 const UNAVAILABLE_STATES = ["unavailable", "unknown"];
@@ -80,6 +81,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
   @state() private _areas?: AreaRegistryEntry[];
   @state() private _devices?: DeviceRegistryEntry[];
   @state() private _entities?: EntityRegistryEntry[];
+  @state() public _showPopup: boolean = false;
 
   private _deviceClasses: { [key: string]: string[] } = DEVICE_CLASSES;
 
@@ -135,6 +137,45 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       }
 
       return entitiesByDomain;
+    }
+  );
+
+  private _entitiesByArea = memoizeOne(
+    (
+      areaId: string,
+      devicesInArea: Set<string>,
+      registryEntities: EntityRegistryEntry[],
+      states: HomeAssistant["states"]
+    ) => {
+      const entitiesInArea = registryEntities
+        .filter(
+          (entry) =>
+            !entry.hidden_by &&
+            (entry.area_id
+              ? entry.area_id === areaId
+              : entry.device_id && devicesInArea.has(entry.device_id))
+        )
+        .map((entry) => entry.entity_id);
+
+      const entitiesByArea: { [domain: string]: HassEntity[] } = {};
+
+      for (const entity of entitiesInArea) {
+        const domain = computeDomain(entity);
+
+
+        const stateObj: HassEntity | undefined = states[entity];
+        if (!stateObj) {
+          continue;
+        }
+
+
+        if (!(domain in entitiesByArea)) {
+          entitiesByArea[domain] = [];
+        }
+        entitiesByArea[domain].push(stateObj);
+      }
+
+      return entitiesByArea;
     }
   );
 
@@ -248,10 +289,12 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
   }
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
+    // Prüfe, ob _config fehlt oder sich geändert hat
     if (changedProps.has("_config") || !this._config) {
       return true;
     }
-
+  
+    // Prüfe, ob sich relevante Eigenschaften geändert haben
     if (
       changedProps.has("_devicesInArea") ||
       changedProps.has("_areas") ||
@@ -259,13 +302,19 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     ) {
       return true;
     }
-
+  
+    // Spezielle Prüfung für _showPopup
+    if (changedProps.has("_showPopup")) {
+      return true; // Render auslösen, wenn sich _showPopup geändert hat
+    }
+  
+    // Prüfe Änderungen an hass
     if (!changedProps.has("hass")) {
       return false;
     }
-
+  
     const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
-
+  
     if (
       !oldHass ||
       oldHass.themes !== this.hass!.themes ||
@@ -273,7 +322,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     ) {
       return true;
     }
-
+  
+    // Prüfe, ob Geräte und Entitäten vollständig sind
     if (
       !this._devices ||
       !this._devicesInArea(this._config.area, this._devices) ||
@@ -281,7 +331,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     ) {
       return false;
     }
-
+  
+    // Prüfe spezifische Änderungen an Entitäten
     const entities = this._entitiesByDomain(
       this._config.area,
       this._devicesInArea(this._config.area, this._devices),
@@ -289,7 +340,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       this._deviceClasses,
       this.hass.states
     );
-
+  
     for (const domainEntities of Object.values(entities)) {
       for (const stateObj of domainEntities) {
         if (oldHass!.states[stateObj.entity_id] !== stateObj) {
@@ -297,10 +348,10 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         }
       }
     }
-
-    return false;
+  
+    return false; // Kein Update erforderlich
   }
-
+  
 
   protected render() {
     if (
@@ -331,17 +382,22 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     }
 
 
+/*
+          <div
+            class="container ${classMap({
+      navigate: this._config.navigation_path !== undefined && this._config.navigation_path !== "",
+    })}"
+            @click=${this._handleNavigation}>
+*/
+
 
     return html`
       <ha-card>
           <div class="icon-container">
             <ha-icon style=${this._config?.area_icon_color ? `color: var(--${this._config.area_icon_color}-color);` : nothing} icon=${this._config.area_icon || area.icon}></ha-icon>
           </div>
-          <div
-            class="container ${classMap({
-      navigate: this._config.navigation_path !== undefined && this._config.navigation_path !== "",
-    })}"
-            @click=${this._handleNavigation}>
+<div class="container" @click="${() => this._handleClick()}">
+
           <div class="right">
 
           <div class="alerts">
@@ -532,10 +588,103 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           </div>
           </div>
         </div>
+        ${(() => {
+          console.log("Render State:", this._showPopup);
+          return this._showPopup ? this.renderPopup() : nothing;
+        })()}
+        
 
       </ha-card>
     `;
   }
+
+  createCard(cardConfig: { type: string, entity: string, [key: string]: any }) {
+    const cardElement = document.createElement(`hui-${cardConfig.type}-card`) as LovelaceCard;
+    if (cardElement) {
+      cardElement.hass = this.hass;
+      cardElement.setConfig(cardConfig);
+      return cardElement;
+    }
+    return html`<p>Invalid Configuration for card type: ${cardConfig.type}</p>`;
+  }
+
+  private _getDomainName(domain: string): string {
+    if (domain === "scene") {
+      return "Scene"; // Gibt "Scene" aus, wenn die Domain "scene" ist
+    }
+  
+    // Gibt den lokalisierten Namen der Domain aus
+    return this.hass!.localize(`component.${domain}.entity_component._.name`) || domain;
+  }
+  
+
+  public renderPopup(): TemplateResult {
+    const entitiesByArea = this._entitiesByArea(
+      this._config!.area,
+      this._devicesInArea(this._config!.area, this._devices!),
+      this._entities!,
+      this.hass.states
+    );
+
+    const area = this._area(this._config!.area, this._areas!);
+
+    const columns = this._config?.columns ? this._config.columns : 4; 
+  
+    // Rendering der Popup-Dialoge
+    return html`
+      <ha-dialog id="more-info-dialog" style="--columns: ${columns};" open @closed="${this._closeDialog}">
+        <div class="dialog-header">
+          <ha-icon-button
+            slot="navigationIcon"
+            dialogaction="cancel"
+            @click=${this._closeDialog}
+            title="Close"
+          >
+            <ha-icon class="center" icon="mdi:close"></ha-icon>
+          </ha-icon-button>
+          <h3>
+            Bereich: ${this._config!.area_name || area!.name}
+          </h3>
+        </div>
+        <div class="tile-container">
+          ${Object.entries(entitiesByArea).map(([domain, entities]) => html`
+            <div class="domain-group">
+              <h4>${this._getDomainName(domain)}</h4>
+              <div class="domain-entities">
+                ${entities.map((entity: HassEntity) => html`
+                  <div class="entity-card">
+                    ${this.createCard({
+                      type: "tile",
+                      entity: entity.entity_id,
+                      ...(domain === "light" && { features: [{ type: "light-brightness" }] }),
+                      ...(domain === "cover" && {
+                        features: [{ type: "cover-open-close" }, { type: "cover-position" }],
+                      }),
+                    })}
+                  </div>
+                `)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </ha-dialog>
+    `;
+  }
+  
+
+  public _handleClick(): void {
+    if (this._config?.navigation_path) {
+      this._handleNavigation();
+    } else {
+      this._showPopup = true;
+        this.requestUpdate();
+    }
+  }
+  
+  private _closeDialog(): void {
+    this._showPopup = false;
+  }
+  
 
 
   protected updated(changedProps: PropertyValues): void {
@@ -554,7 +703,12 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     ) {
       applyThemesOnElement(this, this.hass.themes, this._config.theme);
     }
+    if (changedProps.has("_showPopup") && this._showPopup) {
+      this.renderPopup();
+    }
   }
+
+  
 
   private _handleNavigation() {
     if (this._config!.navigation_path) {
@@ -609,7 +763,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     }
   }
 
-  _getIcon(domain: DomainType, on: boolean, deviceClass?: string): string {
+  private _getIcon(domain: DomainType, on: boolean, deviceClass?: string): string {
     if (domain in DOMAIN_ICONS) {
       const icons = DOMAIN_ICONS[domain];
 
@@ -663,6 +817,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         left: 0;
         right: 0;
         bottom: 0;
+        cursor: pointer;
       }
       .right {
         display: flex;
@@ -732,6 +887,40 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       .text-large {
         font-size: 1.3em;
       }  
+      .dialog-header { 
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      } 
+      .dialog-header ha-icon-button { 
+        margin-right: 10px;  
+      }
+      ha-dialog#more-info-dialog { 
+        --mdc-dialog-max-width: calc(22.5vw * var(--columns) + 3vw); 
+      }
+.tile-container { 
+  display: flex; 
+  flex-direction: column; /* Domain-Gruppen untereinander */
+  gap: 16px; /* Abstand zwischen Domain-Gruppen */
+}
+  .domain-group { 
+  display: flex;
+  flex-direction: column; /* Domain-Titel und Karten untereinander */
+  gap: 8px; /* Abstand zwischen Domain-Header und Karten */
+}
+
+.domain-group h4 { 
+  margin: 0; 
+  font-size: 1.2em;
+}
+
+.domain-entities { 
+  display: grid; 
+  grid-template-columns: repeat(var(--columns), 1fr); /* Karten nebeneinander in Spalten */
+  gap: 8px; /* Abstand zwischen den Karten */
+}
     `;
   }
 
