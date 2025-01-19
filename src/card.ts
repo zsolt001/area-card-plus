@@ -897,30 +897,59 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       .dialog-header ha-icon-button { 
         margin-right: 10px;  
       }
-      ha-dialog#more-info-dialog { 
-        --mdc-dialog-max-width: calc(22.5vw * var(--columns) + 3vw); 
+      ha-dialog#more-info-dialog {
+        --mdc-dialog-max-width: calc(22.5vw * var(--columns) + 3vw);
+        width: 100%;
+        max-width: 90vw; 
+        overflow: hidden; 
       }
-.tile-container { 
-  display: flex; 
-  flex-direction: column; /* Domain-Gruppen untereinander */
-  gap: 16px; /* Abstand zwischen Domain-Gruppen */
-}
-  .domain-group { 
-  display: flex;
-  flex-direction: column; /* Domain-Titel und Karten untereinander */
-  gap: 8px; /* Abstand zwischen Domain-Header und Karten */
+
+      .tile-container {
+        display: flex;
+        flex-direction: column; 
+        gap: 16px; 
+      }
+
+      .domain-group {
+        display: flex;
+        flex-direction: column; 
+        gap: 8px; 
+      }
+
+      .domain-group h4 {
+        margin: 0;
+        font-size: 1.2em;
+      }
+
+      .domain-entities {
+        display: grid;
+        grid-template-columns: repeat(var(--columns), 1fr);
+        gap: 8px; 
+      }
+
+      .entity-card {
+        width: 100%;
+      }
+
+      @media (max-width: 768px) {
+        ha-dialog#more-info-dialog {
+          --columns: 1; 
+          max-width: 100%;
+          padding: 16px;
+        }
+
+        .domain-entities {
+          grid-template-columns: 1fr; 
+        }
+
+        .entity-card {
+          flex-basis: 100%; 
+          max-width: 100%;
+          overflow: hidden; 
+        }
 }
 
-.domain-group h4 { 
-  margin: 0; 
-  font-size: 1.2em;
-}
 
-.domain-entities { 
-  display: grid; 
-  grid-template-columns: repeat(var(--columns), 1fr); /* Karten nebeneinander in Spalten */
-  gap: 8px; /* Abstand zwischen den Karten */
-}
     `;
   }
 
