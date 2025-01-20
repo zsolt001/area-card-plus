@@ -45,7 +45,6 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
 
   private _schema = memoizeOne(() => [
     { name: "area", selector: { area: {} } },
-    { name: "columns", selector: { number: { min: 1, max: 4, mode: "box"} } },
     {
       name: "icon_appearance",
       flatten: true,
@@ -126,6 +125,22 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
     { name: "domain_color", selector: { ui_color: { default_color: "state", include_state: true } } },
   ]);
 
+  private _popupschema = memoizeOne((allDomains: SelectOption[]) => [
+    { name: "columns", selector: { number: { min: 1, max: 4, mode: "box"} } },
+    {
+      name: "popup_settings",
+      selector: {
+        select: {
+          reorder: true,
+          multiple: true,
+          custom_value: true,
+          options: allDomains,
+        },
+      },
+    },
+    { name: "hidden_entities", selector: { entity: { multiple: true	 } } },
+  ]);
+
   protected async firstUpdated(): Promise<void> {
     if (!customElements.get('ha-form') || !customElements.get('hui-action-editor')) {
       (customElements.get('hui-button-card') as HassCustomElement)?.getConfigElement();
@@ -149,14 +164,20 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
     this._classesForArea(area, "toggle")
   );
 
+  private _allDomainsForArea = memoizeOne((area: string): string[] =>
+    this._classesForArea(area, "all")
+  );
+  
+
   private _classesForArea(
     area: string,
-    domain: "sensor" | "binary_sensor" | "toggle",
+    domain: "sensor" | "binary_sensor" | "toggle" | "all",
     numericDeviceClasses?: string[] | undefined
   ): string[] {
     let entities;
-
+  
     if (domain === "toggle") {
+      // Filter für TOGGLE_DOMAINS
       entities = Object.values(this.hass!.entities).filter(
         (e) =>
           TOGGLE_DOMAINS.includes(computeDomain(e.entity_id)) &&
@@ -164,10 +185,22 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
           (e.area_id === area ||
             (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
       );
-
+  
       return [...new Set(entities.map((e) => computeDomain(e.entity_id)))];
-
+  
+    } else if (domain === "all") {
+      // Alle Domains in der Area ohne Filter
+      entities = Object.values(this.hass!.entities).filter(
+        (e) =>
+          !e.hidden &&
+          (e.area_id === area ||
+            (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
+      );
+  
+      return [...new Set(entities.map((e) => computeDomain(e.entity_id)))];
+  
     } else {
+      // Standard-Filter für spezifische Domains
       entities = Object.values(this.hass!.entities).filter(
         (e) =>
           computeDomain(e.entity_id) === domain &&
@@ -176,7 +209,7 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
           (e.area_id === area ||
             (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
       );
-
+  
       const classes = entities
         .map((e) => this.hass!.states[e.entity_id]?.attributes.device_class || "")
         .filter(
@@ -186,10 +219,11 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
               !numericDeviceClasses ||
               numericDeviceClasses.includes(c))
         );
-
+  
       return [...new Set(classes)];
     }
   }
+  
 
   private _buildBinaryOptions = memoizeOne(
     (possibleClasses: string[], currentClasses: string[]): SelectOption[] =>
@@ -206,37 +240,44 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
       this._buildOptions("toggle", possibleClasses, currentClasses)
   );
 
+  private _buildAllOptions = memoizeOne(
+    (possibleClasses: string[], currentClasses: string[]): SelectOption[] =>
+      this._buildOptions("all", possibleClasses, currentClasses)
+  );
+  
+
   private _buildOptions(
-    domain: "sensor" | "binary_sensor" | "toggle",
+    domain: "sensor" | "binary_sensor" | "toggle" | "all",
     possibleClasses: string[],
     currentClasses: string[]
   ): SelectOption[] {
-    let allClasses: string[];
-
-    if (domain === "toggle") {
-      allClasses = [...new Set([...possibleClasses, ...currentClasses])];
-    } else {
-      allClasses = [...new Set([...possibleClasses, ...currentClasses])];
-    }
-
+    // Alle möglichen Klassen sammeln
+    const allClasses = [...new Set([...possibleClasses, ...currentClasses])];
+  
     const options = allClasses.map((deviceClass) => ({
       value: deviceClass,
       label:
         domain === "toggle"
           ? this.hass!.localize(
-            `component.${deviceClass}.entity_component._.name`
-          ) || deviceClass
+              `component.${deviceClass}.entity_component._.name`
+            ) || deviceClass
+          : domain === "all"
+          ? this.hass!.localize(
+              `component.${deviceClass}.entity_component._.name`
+            ) || deviceClass
           : this.hass!.localize(
-            `component.${domain}.entity_component.${deviceClass}.name`
-          ) || deviceClass,
+              `component.${domain}.entity_component.${deviceClass}.name`
+            ) || deviceClass,
     }));
-
+  
+    // Optionen alphabetisch sortieren
     options.sort((a, b) =>
       caseInsensitiveStringCompare(a.label, b.label, this.hass!.locale.language)
     );
-
+  
     return options;
   }
+  
 
 
   setConfig(config: CardConfig): void {
@@ -323,6 +364,8 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
         return this.hass!.localize(`ui.panel.lovelace.editor.card.generic.name`) + " " + this.hass!.localize(`ui.panel.lovelace.editor.card.tile.appearance`);
       case "toggle_domains":
         return this.hass!.localize(`ui.panel.lovelace.editor.cardpicker.domain`);
+      case "popup_settings":
+        return "Popup Settings";
       case "show_active":
         return this.hass!.localize(`ui.common.hide`) + " " + this.hass!.localize(`ui.components.entity.entity-state-picker.state`) + " " + this.hass!.localize(`component.binary_sensor.entity_component._.state.off`);
       case "color":
@@ -493,6 +536,13 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
     );
   }
 
+  public get AllSelectOptions(): SelectOption[] {
+    return this._buildAllOptions(
+      this._allDomainsForArea(this._config!.area || ""),
+      this._config?.popup_settings || this._allDomainsForArea(this._config!.area || "")
+    );
+  }
+
   public get binarySelectOptions(): SelectOption[] {
     return this._buildBinaryOptions(
       this._binaryClassesForArea(this._config!.area || ""),
@@ -528,6 +578,10 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
 
     const toggleschema = this._toggleschema(
       this.toggleSelectOptions
+    );
+
+    const popupschema = this._popupschema(
+      this.AllSelectOptions
     );
 
     const data = {
@@ -617,7 +671,23 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
             @config-changed=${this._customizationChangedDomain}>
           </domain-items-editor>
         </div>
-      </ha-expansion-panel>        
+      </ha-expansion-panel>      
+   
+      <ha-expansion-panel outlined class="main" .name="popup_settings">
+        <div slot="header" role="heading" aria-level="3">
+          <ha-svg-icon .path=${mdiPalette}></ha-svg-icon>
+            ${this._computeLabelCallback({ name: "popup_settings" })}
+        </div>
+        <div class="content">
+          <ha-form
+            .hass=${this.hass}
+            .data=${data}
+            .schema=${popupschema}
+            .computeLabel=${this._computeLabelCallback}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
+        </div>
+      </ha-expansion-panel>     
     `;
   }
 

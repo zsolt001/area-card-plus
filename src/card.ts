@@ -94,6 +94,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       deviceClasses: { [key: string]: string[] },
       states: HomeAssistant["states"]
     ) => {
+      const hiddenEntities = this._config?.hidden_entities || [];
       const entitiesInArea = registryEntities
         .filter(
           (entry) =>
@@ -102,7 +103,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
               ? entry.area_id === areaId
               : entry.device_id && devicesInArea.has(entry.device_id))
         )
-        .map((entry) => entry.entity_id);
+        .map((entry) => entry.entity_id)
+        .filter(entity => !hiddenEntities.includes(entity));;
 
       const entitiesByDomain: { [domain: string]: HassEntity[] } = {};
 
@@ -147,6 +149,8 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       registryEntities: EntityRegistryEntry[],
       states: HomeAssistant["states"]
     ) => {
+      const popupSettings = this._config?.popup_settings || [];
+      const hiddenEntities = this._config?.hidden_entities || []; // Hole die hidden_entities aus der Konfiguration
       const entitiesInArea = registryEntities
         .filter(
           (entry) =>
@@ -155,29 +159,84 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
               ? entry.area_id === areaId
               : entry.device_id && devicesInArea.has(entry.device_id))
         )
-        .map((entry) => entry.entity_id);
-
+        .map((entry) => entry.entity_id)
+        .filter(entity => !hiddenEntities.includes(entity)); // Filtere versteckte Entitäten aus
+  
       const entitiesByArea: { [domain: string]: HassEntity[] } = {};
-
+  
+      // Definiere die Standard-Reihenfolge der Domains
+      const domainOrder = [
+        'light', 'switch', 'media_player', 'climate', 'vacuum', 'lawn_mower', 'cover', 'lock', 'camera',
+        'fan', 'person', 'calendar', 'remote', 'scene', 'device_tracker', 'update', 'binary_sensor', 'sensor', 'script', 'select',
+        'automation', 'button', 'number', 'conversation', 'counter', 'event', 'group', 'image', 'input_boolean', 'input_datetime', 'input_number',
+        'input_select', 'input_text', 'stt', 'sun', 'text', 'time', 'timer', 'todo', 'tts', 'wake_word', 'weather', 'zone'
+      ];
+  
       for (const entity of entitiesInArea) {
         const domain = computeDomain(entity);
-
-
+  
+        if (popupSettings.length > 0 && !popupSettings.includes(domain)) {
+          continue;
+        }
+  
         const stateObj: HassEntity | undefined = states[entity];
         if (!stateObj) {
           continue;
         }
-
-
+  
         if (!(domain in entitiesByArea)) {
           entitiesByArea[domain] = [];
         }
         entitiesByArea[domain].push(stateObj);
       }
-
-      return entitiesByArea;
+  
+      // Bestimme die Sortierreihenfolge der Domains: entweder aus popup_settings oder domainOrder
+      const sortOrder = popupSettings.length > 0 ? popupSettings : domainOrder;
+  
+      // Sortiere die Domains nach der Reihenfolge in popupSettings oder domainOrder
+      const sortedEntitiesByArea = Object.entries(entitiesByArea)
+        .sort(
+          ([domainA], [domainB]) => {
+            const indexA = sortOrder.indexOf(domainA);
+            const indexB = sortOrder.indexOf(domainB);
+  
+            // Falls eine Domain nicht in sortOrder gefunden wird, ans Ende verschieben
+            const adjustedIndexA = indexA === -1 ? sortOrder.length : indexA;
+            const adjustedIndexB = indexB === -1 ? sortOrder.length : indexB;
+  
+            return adjustedIndexA - adjustedIndexB; // Vergleich basierend auf der Reihenfolge im sortOrder
+          }
+        )
+        .reduce((acc, [domain, entities]) => {
+          // Sortiere die Entitäten innerhalb der Domain
+          const sortedEntities = entities
+            .sort((a, b) => {
+              const stateA = a.state;
+              const stateB = b.state;
+  
+              // Überprüfen, ob der Status in STATES_OFF enthalten ist
+              const isStateAOn = !STATES_OFF.includes(stateA); // "on" wenn nicht in STATES_OFF
+              const isStateBOn = !STATES_OFF.includes(stateB); // "on" wenn nicht in STATES_OFF
+  
+              // Entitäten mit "on"-Status zuerst
+              if (isStateAOn && !isStateBOn) return -1; // A kommt vor B
+              if (!isStateAOn && isStateBOn) return 1;  // B kommt vor A
+  
+              // Wenn beide den gleichen Status haben, alphabetisch sortieren
+              return a.entity_id.localeCompare(b.entity_id);
+            });
+  
+          acc[domain] = sortedEntities;
+          return acc;
+        }, {} as { [domain: string]: HassEntity[] });
+  
+      return sortedEntitiesByArea;
     }
   );
+  
+  
+  
+  
 
   private _isOn(domain: string, deviceClass?: string): HassEntity | undefined {
     const entities = this._entitiesByDomain(
@@ -598,95 +657,6 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     `;
   }
 
-  createCard(cardConfig: { type: string, entity: string, [key: string]: any }) {
-    const cardElement = document.createElement(`hui-${cardConfig.type}-card`) as LovelaceCard;
-    if (cardElement) {
-      cardElement.hass = this.hass;
-      cardElement.setConfig(cardConfig);
-      return cardElement;
-    }
-    return html`<p>Invalid Configuration for card type: ${cardConfig.type}</p>`;
-  }
-
-  private _getDomainName(domain: string): string {
-    if (domain === "scene") {
-      return "Scene"; // Gibt "Scene" aus, wenn die Domain "scene" ist
-    }
-  
-    // Gibt den lokalisierten Namen der Domain aus
-    return this.hass!.localize(`component.${domain}.entity_component._.name`) || domain;
-  }
-  
-
-  public renderPopup(): TemplateResult {
-    const entitiesByArea = this._entitiesByArea(
-      this._config!.area,
-      this._devicesInArea(this._config!.area, this._devices!),
-      this._entities!,
-      this.hass.states
-    );
-
-    const area = this._area(this._config!.area, this._areas!);
-
-    const columns = this._config?.columns ? this._config.columns : 4; 
-  
-    // Rendering der Popup-Dialoge
-    return html`
-      <ha-dialog id="more-info-dialog" style="--columns: ${columns};" open @closed="${this._closeDialog}">
-        <div class="dialog-header">
-          <ha-icon-button
-            slot="navigationIcon"
-            dialogaction="cancel"
-            @click=${this._closeDialog}
-            title="Close"
-          >
-            <ha-icon class="center" icon="mdi:close"></ha-icon>
-          </ha-icon-button>
-          <h3>
-            Bereich: ${this._config!.area_name || area!.name}
-          </h3>
-        </div>
-        <div class="tile-container">
-          ${Object.entries(entitiesByArea).map(([domain, entities]) => html`
-            <div class="domain-group">
-              <h4>${this._getDomainName(domain)}</h4>
-              <div class="domain-entities">
-                ${entities.map((entity: HassEntity) => html`
-                  <div class="entity-card">
-                    ${this.createCard({
-                      type: "tile",
-                      entity: entity.entity_id,
-                      ...(domain === "light" && { features: [{ type: "light-brightness" }] }),
-                      ...(domain === "cover" && {
-                        features: [{ type: "cover-open-close" }, { type: "cover-position" }],
-                      }),
-                    })}
-                  </div>
-                `)}
-              </div>
-            </div>
-          `)}
-        </div>
-      </ha-dialog>
-    `;
-  }
-  
-
-  public _handleClick(): void {
-    if (this._config?.navigation_path) {
-      this._handleNavigation();
-    } else {
-      this._showPopup = true;
-        this.requestUpdate();
-    }
-  }
-  
-  private _closeDialog(): void {
-    this._showPopup = false;
-  }
-  
-
-
   protected updated(changedProps: PropertyValues): void {
     super.updated(changedProps);
     if (!this._config || !this.hass) {
@@ -708,14 +678,11 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     }
   }
 
-  
-
   private _handleNavigation() {
     if (this._config!.navigation_path) {
       navigate(undefined, this._config!.navigation_path);
     }
   }
-
 
   private _toggle(ev: Event) {
     ev.stopPropagation();
@@ -782,8 +749,91 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     return "";
   }
 
+  private _getDomainName(domain: string): string {
+    if (domain === "scene") {
+      return "Scene"; // Gibt "Scene" aus, wenn die Domain "scene" ist
+    }
+  
+    // Gibt den lokalisierten Namen der Domain aus
+    return this.hass!.localize(`component.${domain}.entity_component._.name`) || domain;
+  }
 
+  createCard(cardConfig: { type: string, entity: string, [key: string]: any }) {
+    const cardElement = document.createElement(`hui-${cardConfig.type}-card`) as LovelaceCard;
+    if (cardElement) {
+      cardElement.hass = this.hass;
+      cardElement.setConfig(cardConfig);
+      return cardElement;
+    }
+    return html`<p>Invalid Configuration for card type: ${cardConfig.type}</p>`;
+  }
 
+  public _handleClick(): void {
+    if (this._config?.navigation_path) {
+      this._handleNavigation();
+    } else {
+      this._showPopup = true;
+        this.requestUpdate();
+    }
+  }
+  
+  private _closeDialog(): void {
+    this._showPopup = false;
+  }
+
+  public renderPopup(): TemplateResult {
+    const entitiesByArea = this._entitiesByArea(
+      this._config!.area,
+      this._devicesInArea(this._config!.area, this._devices!),
+      this._entities!,
+      this.hass.states
+    );
+
+    const area = this._area(this._config!.area, this._areas!);
+
+    const columns = this._config?.columns ? this._config.columns : 4; 
+  
+    // Rendering der Popup-Dialoge
+    return html`
+      <ha-dialog id="more-info-dialog" style="--columns: ${columns};" open @closed="${this._closeDialog}">
+        <div class="dialog-header">
+          <ha-icon-button
+            slot="navigationIcon"
+            dialogaction="cancel"
+            @click=${this._closeDialog}
+            title="Close"
+          >
+            <ha-icon class="center" icon="mdi:close"></ha-icon>
+          </ha-icon-button>
+          <h3>
+            Bereich: ${this._config!.area_name || area!.name}
+          </h3>
+        </div>
+        <div class="tile-container">
+          ${Object.entries(entitiesByArea).map(([domain, entities]) => html`
+            <div class="domain-group">
+              <h4>${this._getDomainName(domain)}</h4>
+              <div class="domain-entities">
+                ${entities.map((entity: HassEntity) => html`
+                  <div class="entity-card">
+                    ${this.createCard({
+                      type: "tile",
+                      entity: entity.entity_id,
+                      ...(domain === "light" && { features: [{ type: "light-brightness" }] }),
+                      ...(domain === "cover" && {
+                        features: [{ type: "cover-open-close" }, { type: "cover-position" }],
+                      }),
+                    })}
+                  </div>
+                `)}
+              </div>
+            </div>
+          `)}
+        </div>
+      </ha-dialog>
+    `;
+  }
+    
   static get styles() {
     return css`
       ha-card {
@@ -898,7 +948,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         margin-right: 10px;  
       }
       ha-dialog#more-info-dialog {
-        --mdc-dialog-max-width: calc(22.5vw * var(--columns) + 3vw);
+        --mdc-dialog-max-width: auto;
         width: 100%;
         max-width: 90vw; 
         overflow: hidden; 
@@ -928,7 +978,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       }
 
       .entity-card {
-        width: 100%;
+        width: 22.5vw;
       }
 
       @media (max-width: 768px) {
@@ -944,7 +994,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
 
         .entity-card {
           flex-basis: 100%; 
-          max-width: 100%;
+          width: 100%;
           overflow: hidden; 
         }
 }
