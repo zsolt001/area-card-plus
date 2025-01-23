@@ -3,7 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { computeDomain, HomeAssistant, LovelaceCardEditor, LovelaceCardConfig } from "custom-card-helpers";
 import memoizeOne from "memoize-one";
 import { caseInsensitiveStringCompare, getSensorNumericDeviceClasses, HassCustomElement, SubElementConfig, Settings, fireEvent } from "./helpers";
-import { DEVICE_CLASSES, TOGGLE_DOMAINS } from "./card";
+import { DEVICE_CLASSES, TOGGLE_DOMAINS, domainOrder } from "./card";
 import { mdiPalette } from "@mdi/js";
 import './items-editor';
 import './item-editor';
@@ -139,6 +139,7 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
       },
     },
     { name: "hidden_entities", selector: { entity: { multiple: true	 } } },
+    { name: "hide_unavailable", selector: { boolean: { } } },
   ]);
 
   protected async firstUpdated(): Promise<void> {
@@ -305,11 +306,19 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
 
         const possibleToggleDomains = this._toggleDomainsForArea(currentArea);
 
+        const possibleDomains = this._allDomainsForArea(currentArea);
+
         const sortedToggleDomains = possibleToggleDomains.sort(
           (a, b) => TOGGLE_DOMAINS.indexOf(a) - TOGGLE_DOMAINS.indexOf(b)
         );
+        
+        const sortedDomains = possibleDomains.sort(
+          (a, b) => domainOrder.indexOf(a) - domainOrder.indexOf(b)
+        );  
 
         this._config.toggle_domains = [...sortedToggleDomains];
+
+        this._config.popup_settings = [...sortedDomains];
 
         this.requestUpdate();
       }
@@ -366,6 +375,8 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
         return this.hass!.localize(`ui.panel.lovelace.editor.cardpicker.domain`);
       case "popup_settings":
         return "Popup Settings";
+      case "hide_unavailable":
+        return this.hass!.localize(`ui.common.hide`)  + " " + this.hass!.localize(`state.default.unavailable`) ; 
       case "show_active":
         return this.hass!.localize(`ui.common.hide`) + " " + this.hass!.localize(`ui.components.entity.entity-state-picker.state`) + " " + this.hass!.localize(`component.binary_sensor.entity_component._.state.off`);
       case "color":
@@ -566,6 +577,10 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
       this._config.area || ""
     );
 
+    const possibleDomains = this._allDomainsForArea(
+      this._config.area || ""
+    );    
+
     const schema = this._schema();
 
     const binaryschema = this._binaryschema(
@@ -588,6 +603,7 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
       alert_classes: DEVICE_CLASSES.binary_sensor,
       sensor_classes: DEVICE_CLASSES.sensor,
       toggle_domains: possibleToggleDomains,
+      popup_settings: possibleDomains,
       ...this._config,
     };
 

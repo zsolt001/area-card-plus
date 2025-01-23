@@ -9,6 +9,7 @@ import {
   AreaRegistryEntry, DeviceRegistryEntry, EntityRegistryEntry, subscribeAreaRegistry, subscribeDeviceRegistry, subscribeEntityRegistry,
   subscribeOne, SubscribeMixin, isNumericState, blankBeforeUnit
 } from "./helpers";
+import { mdiClose } from "@mdi/js";
 
 export interface CardConfig extends LovelaceCardConfig {
   area: string;
@@ -27,6 +28,14 @@ const ALERT_DOMAINS = ["binary_sensor"];
 const CLIMATE_DOMAINS = ["climate"];
 
 export const TOGGLE_DOMAINS = ["light", "switch", "fan", "media_player", "lock", "vacuum"];
+
+
+export const domainOrder = [ 'alarm_control_panel', 'siren',
+  'light', 'switch', 'media_player', 'climate', 'air_quality', 'humdifier', 'vacuum', 'lawn_mower', 'cover', 'lock', 'camera',
+  'fan', 'valve', 'water_heater', 'person', 'calendar', 'remote', 'scene', 'device_tracker', 'update', 'notifications', 'binary_sensor', 'sensor', 'script', 'tags', 'select',
+  'automation', 'button', 'number', 'conversation', 'assist_satellite', 'counter', 'event', 'group', 'image', 'image_processing', 'input_boolean', 'input_datetime', 'input_number',
+  'input_select', 'input_text', 'stt', 'sun', 'text', 'date', 'datetime', 'time', 'timer', 'todo', 'tts', 'wake_word', 'weather', 'zone', 'geo_location'
+];
 
 export const DEVICE_CLASSES = {
   sensor: ["temperature", "humidity"],
@@ -160,17 +169,15 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
               : entry.device_id && devicesInArea.has(entry.device_id))
         )
         .map((entry) => entry.entity_id)
-        .filter(entity => !hiddenEntities.includes(entity)); // Filtere versteckte Entitäten aus
+        .filter(entity => !hiddenEntities.includes(entity))
+        .filter(entity => 
+          !this._config?.hide_unavailable || // Wenn `hide_unavailable` false ist, filtere nicht
+          !UNAVAILABLE_STATES.includes(states[entity]?.state)); // Filtere versteckte Entitäten aus
   
       const entitiesByArea: { [domain: string]: HassEntity[] } = {};
   
       // Definiere die Standard-Reihenfolge der Domains
-      const domainOrder = [
-        'light', 'switch', 'media_player', 'climate', 'vacuum', 'lawn_mower', 'cover', 'lock', 'camera',
-        'fan', 'person', 'calendar', 'remote', 'scene', 'device_tracker', 'update', 'binary_sensor', 'sensor', 'script', 'select',
-        'automation', 'button', 'number', 'conversation', 'counter', 'event', 'group', 'image', 'input_boolean', 'input_datetime', 'input_number',
-        'input_select', 'input_text', 'stt', 'sun', 'text', 'time', 'timer', 'todo', 'tts', 'wake_word', 'weather', 'zone'
-      ];
+
   
       for (const entity of entitiesInArea) {
         const domain = computeDomain(entity);
@@ -209,22 +216,33 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         )
         .reduce((acc, [domain, entities]) => {
           // Sortiere die Entitäten innerhalb der Domain
-          const sortedEntities = entities
-            .sort((a, b) => {
-              const stateA = a.state;
-              const stateB = b.state;
-  
-              // Überprüfen, ob der Status in STATES_OFF enthalten ist
-              const isStateAOn = !STATES_OFF.includes(stateA); // "on" wenn nicht in STATES_OFF
-              const isStateBOn = !STATES_OFF.includes(stateB); // "on" wenn nicht in STATES_OFF
-  
-              // Entitäten mit "on"-Status zuerst
-              if (isStateAOn && !isStateBOn) return -1; // A kommt vor B
-              if (!isStateAOn && isStateBOn) return 1;  // B kommt vor A
-  
-              // Wenn beide den gleichen Status haben, alphabetisch sortieren
-              return a.entity_id.localeCompare(b.entity_id);
-            });
+          const sortedEntities = entities.sort((a, b) => {
+            const stateA = a.state;
+            const stateB = b.state;
+          
+            // Gruppenzuordnung
+            const getGroup = (state: string) => {
+              if (!STATES_OFF.includes(state) && !UNAVAILABLE_STATES.includes(state)) {
+                return 0; // Gruppe 0: "on"
+              } else if (STATES_OFF.includes(state) && !UNAVAILABLE_STATES.includes(state)) {
+                return 1; // Gruppe 1: Zwischenzustände
+              } else {
+                return 2; // Gruppe 2: "unavailable"
+              }
+            };
+          
+            const groupA = getGroup(stateA);
+            const groupB = getGroup(stateB);
+          
+            // Primär nach Gruppe sortieren
+            if (groupA !== groupB) {
+              return groupA - groupB;
+            }
+          
+            // Innerhalb derselben Gruppe alphabetisch sortieren
+            return a.entity_id.localeCompare(b.entity_id);
+          });
+          
   
           acc[domain] = sortedEntities;
           return acc;
@@ -755,7 +773,7 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
     }
   
     // Gibt den lokalisierten Namen der Domain aus
-    return this.hass!.localize(`component.${domain}.entity_component._.name`) || domain;
+    return this.hass!.localize(`component.${domain}.entity_component._.name`);
   }
 
   createCard(cardConfig: { type: string, entity: string, [key: string]: any }) {
@@ -799,16 +817,15 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
         <div class="dialog-header">
           <ha-icon-button
             slot="navigationIcon"
-            dialogaction="cancel"
+            .path=${mdiClose}
             @click=${this._closeDialog}
-            title="Close"
-          >
-            <ha-icon class="center" icon="mdi:close"></ha-icon>
-          </ha-icon-button>
-          <h3>
-            Bereich: ${this._config!.area_name || area!.name}
-          </h3>
+            .label=${this.hass!.localize("ui.common.close")}
+          ></ha-icon-button>
+          <div slot="title">
+            <h3>${this._config?.area_name || area?.name }</h3>
+          </div>
         </div>
+
         <div class="tile-container">
           ${Object.entries(entitiesByArea).map(([domain, entities]) => html`
             <div class="domain-group">
@@ -819,10 +836,15 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
                     ${this.createCard({
                       type: "tile",
                       entity: entity.entity_id,
+                      ...(domain === "alarm_control_panel" && { features: [{ type: "alarm-modes", modes: ["armed_home", "armed_away", "armed_night", "armed_vacation", "armed_custom_bypass", "disarmed"] }] }), 
                       ...(domain === "light" && { features: [{ type: "light-brightness" }] }),
-                      ...(domain === "cover" && {
-                        features: [{ type: "cover-open-close" }, { type: "cover-position" }],
-                      }),
+                      ...(domain === "cover" && { features: [{ type: "cover-open-close" }, { type: "cover-position" }] }),
+                      ...(domain === "vacuum" && { features: [{ type: "vacuum-commands", commands: ["start_pause", "stop", "clean_spot", "locate", "return_home"]}] }),  
+                      ...(domain === "climate" && { features: [{ type: "climate-hvac-modes", hvac_modes: ["auto", "heat_cool", "heat", "cool", "dry", "fan_only", "off"]}] }), 
+                      ...(domain === "media_player" && { features: [{ type: "media-player-volume-slider" }] }), 
+                      ...(domain === "lock" && { features: [{ type: "lock-commands" }] }), 
+                      ...(domain === "fan" && { features: [{ type: "fan-speed" }] }), 
+                      ...(domain === "update" && { features: [{ type: "update-actions", backup: "ask" }] }), 
                     })}
                   </div>
                 `)}
@@ -939,10 +961,9 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
       }  
       .dialog-header { 
         display: flex;
-        justify-content: flex-start;
-        align-items: center;
         gap: 8px;
         margin-bottom: 12px;
+        align-items: center;
       } 
       .dialog-header ha-icon-button { 
         margin-right: 10px;  
