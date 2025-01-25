@@ -39,7 +39,7 @@ abstract class BaseItemsEditor extends LitElement {
         (conf, index) => html`
                 <div class="customize-item">
                   <ha-select
-                    label="Customize"
+                    label=${this.hass!.localize('ui.panel.lovelace.editor.features.edit')}
                     name="Customize"
                     class="select-customization"
                     naturalMenuWidth
@@ -74,7 +74,7 @@ abstract class BaseItemsEditor extends LitElement {
   
           <div class="add-item row">
             <ha-select
-              label="Customize"
+              label=${this.hass!.localize('ui.panel.lovelace.editor.features.add')}
               name="Customize"
               class="add-customization"
               naturalMenuWidth
@@ -137,18 +137,21 @@ abstract class BaseItemsEditor extends LitElement {
 
   static get styles(): CSSResult {
     return css`
+        .customization {
+          margin-top: 16px;
+        }
         .customize-item, .add-item {
           display: flex;
           align-items: center;
         }
-        .add-customization, .select-customization {
-          padding-right: 8px;
+        .add-customization, .select-customization {        
           width: 100%;
           margin-top: 8px;
         }
         .remove-icon, .edit-icon {
           --mdc-icon-button-size: 36px;
           color: var(--secondary-text-color);
+          padding-left: 4px;
         }
       `;
   }
