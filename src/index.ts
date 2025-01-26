@@ -10,8 +10,8 @@ console.info(
 
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
-  type: "custom-area-card",
-  name: "Custom Area Card",
+  type: "area-card-plus",
+  name: "Area Card Plus",
   preview: true, 
   description: "A custom card to display area information.",
 });

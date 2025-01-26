@@ -4,7 +4,7 @@ module.exports = {
   mode: 'production', // Oder 'production', je nach Bedarf
   entry: './src/index.ts',
   output: {
-    filename: 'custom-area-card.js',
+    filename: 'area-card-plus.js',
     path: path.resolve(__dirname, 'dist'),
   },
   resolve: {

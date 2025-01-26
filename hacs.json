@@ -1,7 +1,7 @@
 {
-  "name": "custom-area-card",
+  "name": "area-card-plus",
   "content_in_root": false,
   "render_readme": true,
-  "filename": "custom-area-card.js",
+  "filename": "area-card-plus.js",
   "homeassistant": "2024.12.0"
 }

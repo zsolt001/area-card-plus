@@ -69,18 +69,18 @@ const DOMAIN_ICONS = {
   },
 };
 
-@customElement("custom-area-card")
+@customElement("area-card-plus")
 export class CustomAreaCard extends SubscribeMixin(LitElement) implements LovelaceCard {
 
   static getConfigElement() {
-    return document.createElement("custom-area-card-editor");
+    return document.createElement("area-card-plus-editor");
   }
 
   public static async getStubConfig(
     hass: HomeAssistant
   ): Promise<CardConfig> {
     const areas = await subscribeOne(hass.connection, subscribeAreaRegistry);
-    return { type: "custom:custom-area-card", area: areas[0]?.area_id || "" };
+    return { type: "custom:area-card-plus", area: areas[0]?.area_id || "" };
   }
 
   @property({ attribute: false }) public hass!: HomeAssistant;

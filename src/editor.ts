@@ -32,7 +32,7 @@ interface SubElementEditor {
   index?: number;
 }
 
-@customElement("custom-area-card-editor")
+@customElement("area-card-plus-editor")
 export class CustomAreaCardEditor extends LitElement implements LovelaceCardEditor {
 
   @property({ attribute: false }) public hass?: HomeAssistant;
