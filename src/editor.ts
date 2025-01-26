@@ -33,7 +33,7 @@ interface SubElementEditor {
 }
 
 @customElement("area-card-plus-editor")
-export class CustomAreaCardEditor extends LitElement implements LovelaceCardEditor {
+export class AreaCardPlusEditor extends LitElement implements LovelaceCardEditor {
 
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: CardConfig;
@@ -303,21 +303,19 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
       const previousArea = previousConfig?.area;
       const currentArea = this._config.area;
   
-      const previousExtraEntities = previousConfig?.extra_entities;
-      const currentExtraEntities = this._config.extra_entities;
+      const previousExtraEntities = previousConfig?.extra_entities || []; // Standard: leeres Array
+      const currentExtraEntities = this._config.extra_entities || []; // Standard: leeres Array
   
       // Überprüfen, ob sich extra_entities geändert haben
       const extraEntitiesChanged =
         previousExtraEntities.length !== currentExtraEntities.length ||
         !previousExtraEntities.every((entity: string) => currentExtraEntities.includes(entity));
   
-      if (previousArea !== currentArea  ) {
+      if (previousArea !== currentArea) {
         // Neu berechnen von Domains bei Änderungen an area oder extra_entities
         const possibleToggleDomains = this._toggleDomainsForArea(currentArea);
   
         const possibleDomains = this._allDomainsForArea(currentArea);
-  
-
   
         const sortedToggleDomains = possibleToggleDomains.sort(
           (a, b) => TOGGLE_DOMAINS.indexOf(a) - TOGGLE_DOMAINS.indexOf(b)
@@ -332,18 +330,17 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
   
         this.requestUpdate();
       }
-
-     if (extraEntitiesChanged) {
+  
+      if (extraEntitiesChanged) {
         // Hinzufügen von Domains aus extra_entities
         for (const entity of currentExtraEntities) {
           const domain = computeDomain(entity);
           if (!this._config.popup_domains.includes(domain)) {
             this._config.popup_domains.push(domain);
           }
-          this.requestUpdate();
         }
-
-      } 
+        this.requestUpdate();
+      }
     }
   
     if (!this._numericDeviceClasses) {
@@ -352,6 +349,7 @@ export class CustomAreaCardEditor extends LitElement implements LovelaceCardEdit
       this._numericDeviceClasses = sensorNumericDeviceClasses;
     }
   }
+  
   
   private _valueChanged(event: CustomEvent) {
     this._config = event.detail.value;

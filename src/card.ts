@@ -70,7 +70,7 @@ const DOMAIN_ICONS = {
 };
 
 @customElement("area-card-plus")
-export class CustomAreaCard extends SubscribeMixin(LitElement) implements LovelaceCard {
+export class AreaCardPlus extends SubscribeMixin(LitElement) implements LovelaceCard {
 
   static getConfigElement() {
     return document.createElement("area-card-plus-editor");
@@ -703,7 +703,6 @@ export class CustomAreaCard extends SubscribeMixin(LitElement) implements Lovela
           </div>
         </div>
         ${(() => {
-          console.log("Render State:", this._showPopup);
           return this._showPopup ? this.renderPopup() : nothing;
         })()}
         
