@@ -8,55 +8,65 @@
           <div class="icon-container">
             <ha-icon style=${(null===(e=this._config)||void 0===e?void 0:e.area_icon_color)?`color: var(--${this._config.area_icon_color}-color);`:W} icon=${this._config.area_icon||r.icon}></ha-icon>
           </div>
-<div class="container" @click="${()=>this._handleClick()}">
+          <div class="container" @click="${()=>this._handleClick()}">
 
           <div class="right">
 
           <div class="alerts">
             ${Xe.map((e=>e in a?this._deviceClasses[e].map((t=>{var i,s,o;const n=a[e].filter((e=>(e.attributes.device_class||"default")===t&&"on"===e.state)),r=null===(s=null===(i=this._config)||void 0===i?void 0:i.customization_alert)||void 0===s?void 0:s.find((e=>e.type===t)),l=null==r?void 0:r.color,c=null==r?void 0:r.icon,h=n.length;return h>0?V`
-                      <div class="icon-with-count" @click=${i=>this._toggle(i,e,t)}>
+                      <div
+                        class="icon-with-count"
+                        @click=${i=>this._toggle(i,e,t)}
+                      >
                         <ha-state-icon
-                          class="alert" style=${l?`color: var(--${l}-color);`:(null===(o=this._config)||void 0===o?void 0:o.alert_color)?`color: ${this._config.alert_color};`:W}
+                          class="alert"
+                          style=${l?`color: var(--${l}-color);`:(null===(o=this._config)||void 0===o?void 0:o.alert_color)?`color: ${this._config.alert_color};`:W}
                           .icon=${c||this._getIcon(e,h>0,t)}
                         ></ha-state-icon>
-                        <span class="active-count  text-small${h>0?"on":"off"}">${h}</span>
+                        <span
+                          class="active-count  text-small${h>0?"on":"off"}"
+                          >${h}</span
+                        >
                       </div>
                     `:W})):W))}
           </div>          
 
           <div class="buttons">
             ${this._config.show_active?null===(t=this._config.toggle_domains)||void 0===t?void 0:t.map((e=>{var t,i,s;if(!(e in a))return W;if("climate"===e)return W;const o=null===(i=null===(t=this._config)||void 0===t?void 0:t.customization_domain)||void 0===i?void 0:i.find((t=>t.type===e)),n=null==o?void 0:o.color,r=null==o?void 0:o.icon,l=a[e].filter((e=>!Je.includes(e.state)&&!Qe.includes(e.state))).length;return l>0?V`
-                    <div
-                      class="icon-with-count hover"
-                      @click=${t=>this._toggle(t,e)}
-
-                    >
-                      <ha-state-icon
-                        style=${n?`color: var(--${n}-color);`:(null===(s=this._config)||void 0===s?void 0:s.domain_color)?`color: ${this._config.domain_color};`:W}
-                        class=${l>0?"toggle-on":"toggle-off"}
-                        .domain=${e}
-                        .icon=${r||this._getIcon(e,l>0)}
-                      ></ha-state-icon>
-                      <span class="active-count text-small ${l>0?"on":"off"}">
-                        ${l}
-                      </span>
-                    </div>
-                  `:W})):null===(i=this._config.toggle_domains)||void 0===i?void 0:i.map((e=>{var t,i,s;if(!(e in a))return W;if("climate"===e)return W;const o=null===(i=null===(t=this._config)||void 0===t?void 0:t.customization_domain)||void 0===i?void 0:i.find((t=>t.type===e)),n=null==o?void 0:o.color,r=null==o?void 0:o.icon,l=a[e].filter((e=>!Je.includes(e.state)&&!Qe.includes(e.state))).length;return V`
-                  <div
-                    class="icon-with-count hover"
-                    @click=${t=>this._toggle(t,e)}
-                  >
-                    <ha-state-icon
-                      style=${n?`color: var(--${n}-color);`:(null===(s=this._config)||void 0===s?void 0:s.domain_color)?`color: ${this._config.domain_color};`:W}
-                      class=${l>0?"toggle-on":"toggle-off"}
-                      .domain=${e}
-                      .icon=${r||this._getIcon(e,l>0)}
-                    ></ha-state-icon>
-                    <span class="active-count text-small ${l>0?"on":"off"}">
-                      ${l}
-                    </span>
-                  </div>
-                `}))}
+                        <div
+                          class="icon-with-count hover"
+                          @click=${t=>this._toggle(t,e)}
+                        >
+                          <ha-state-icon
+                            style=${n?`color: var(--${n}-color);`:(null===(s=this._config)||void 0===s?void 0:s.domain_color)?`color: ${this._config.domain_color};`:W}
+                            class=${l>0?"toggle-on":"toggle-off"}
+                            .domain=${e}
+                            .icon=${r||this._getIcon(e,l>0)}
+                          ></ha-state-icon>
+                          <span
+                            class="active-count text-small ${l>0?"on":"off"}"
+                          >
+                            ${l}
+                          </span>
+                        </div>
+                      `:W})):null===(i=this._config.toggle_domains)||void 0===i?void 0:i.map((e=>{var t,i,s;if(!(e in a))return W;if("climate"===e)return W;const o=null===(i=null===(t=this._config)||void 0===t?void 0:t.customization_domain)||void 0===i?void 0:i.find((t=>t.type===e)),n=null==o?void 0:o.color,r=null==o?void 0:o.icon,l=a[e].filter((e=>!Je.includes(e.state)&&!Qe.includes(e.state))).length;return V`
+                      <div
+                        class="icon-with-count hover"
+                        @click=${t=>this._toggle(t,e)}
+                      >
+                        <ha-state-icon
+                          style=${n?`color: var(--${n}-color);`:(null===(s=this._config)||void 0===s?void 0:s.domain_color)?`color: ${this._config.domain_color};`:W}
+                          class=${l>0?"toggle-on":"toggle-off"}
+                          .domain=${e}
+                          .icon=${r||this._getIcon(e,l>0)}
+                        ></ha-state-icon>
+                        <span
+                          class="active-count text-small ${l>0?"on":"off"}"
+                        >
+                          ${l}
+                        </span>
+                      </div>
+                    `}))}
           </div>
 
           </div>
@@ -66,24 +76,26 @@
               <div class="sensors">
                 ${Ge.map((e=>{if(!(e in a))return W;const t=this._deviceClasses[e].map(((t,i,s)=>{var o,n,r;if(0===a[e].filter((e=>e.attributes.device_class===t)).length)return W;const l=this._average(e,t),c=null===(n=null===(o=this._config)||void 0===o?void 0:o.customization_sensor)||void 0===n?void 0:n.find((e=>e.type===t)),h=(null==c?void 0:c.color)||(null===(r=this._config)||void 0===r?void 0:r.sensor_color);return V`
                         <span
-                          class="sensor-value" @click=${i=>this._toggle(i,e,t)}
+                          class="sensor-value"
+                          @click=${i=>this._toggle(i,e,t)}
                           style=${h?`color: var(--${h}-color);`:W}
                         >
                           ${i>0?" - ":""}${l}
                         </span>
                       `})).filter((e=>e!==W));return 0===t.length?W:V`
-                    <div class="sensor text-medium off">
-                      ${t}
-                    </div>
+                    <div class="sensor text-medium off">${t}</div>
                   `}))}
               </div>
             </div>
             <div class="climate text-small off" >
             ${(null===(n=null===(o=this._config)||void 0===o?void 0:o.toggle_domains)||void 0===n?void 0:n.includes("climate"))?et.map((e=>{if(!(e in a))return"";const t=a[e].filter((e=>{const t=e.attributes.hvac_action;return!Je.includes(e.state)&&!Qe.includes(e.state)||t&&("idle"!==t||"off"===t)})).map((e=>`${e.attributes.temperature||"N/A"}°C`));return 0===t.length?"":V`
-                <div class="climate" @click=${t=>this._toggle(t,e)}>
-                  (${t.join(", ")})
-                </div>
-              `})):""}
+                      <div
+                        class="climate"
+                        @click=${t=>this._toggle(t,e)}
+                      >
+                        (${t.join(", ")})
+                      </div>
+                    `})):""}
             
             </div>
           </div>
@@ -94,7 +106,12 @@
 
       </ha-card>
     `}updated(e){if(super.updated(e),!this._config||!this.hass)return;const t=e.get("hass"),i=e.get("_config");(!e.has("hass")||t&&t.themes===this.hass.themes)&&(!e.has("_config")||i&&i.theme===this._config.theme)||function(e,t,i,s){void 0===s&&(s=!1),e._themes||(e._themes={});var o=t.default_theme;("default"===i||i&&t.themes[i])&&(o=i);var n=$e({},e._themes);if("default"!==o){var a=t.themes[o];Object.keys(a).forEach((function(t){var i="--"+t;e._themes[i]="",n[i]=a[t]}))}if(e.updateStyles?e.updateStyles(n):window.ShadyCSS&&window.ShadyCSS.styleSubtree(e,n),s){var r=document.querySelector("meta[name=theme-color]");if(r){r.hasAttribute("default-content")||r.setAttribute("default-content",r.getAttribute("content"));var l=n["--primary-color"]||r.getAttribute("default-content");r.setAttribute("content",l)}}}(this,this.hass.themes,this._config.theme),e.has("_showPopup")&&this._showPopup&&this.renderPopup()}_handleNavigation(){this._config.navigation_path&&function(e,t,i){void 0===i&&(i=!1),i?history.replaceState(null,"",t):history.pushState(null,"",t),xe(window,"location-changed",{replace:i})}(0,this._config.navigation_path)}_toggle(e,t,i){var s,o,n,a,r,l;e.stopPropagation();const c=null===(o=null===(s=this._config)||void 0===s?void 0:s.customization_domain)||void 0===o?void 0:o.find((e=>e.type===t)),h=null==c?void 0:c.tap_action,d=null===(a=null===(n=this._config)||void 0===n?void 0:n.customization_alert)||void 0===a?void 0:a.find((e=>e.type===i)),u=null==d?void 0:d.tap_action,m=null===(l=null===(r=this._config)||void 0===r?void 0:r.customization_sensor)||void 0===l?void 0:l.find((e=>e.type===i)),p=null==m?void 0:m.tap_action;if("toggle"===h)"media_player"===t?this.hass.callService(t,this._isOn(t)?"media_pause":"media_play",void 0,{area_id:this._config.area}):"lock"===t?this.hass.callService(t,this._isOn(t)?"lock":"unlock",void 0,{area_id:this._config.area}):"vacuum"===t?this.hass.callService(t,this._isOn(t)?"stop":"start",void 0,{area_id:this._config.area}):tt.includes(t)&&this.hass.callService(t,this._isOn(t)?"turn_off":"turn_on",void 0,{area_id:this._config.area});else if("popup"===h||void 0===h)"binary_sensor"!==t&&"sensor"!==t&&"climate"!==t&&this._showPopupForDomain(t),"climate"===t&&"popup"===h&&this._showPopupForDomain(t);else if("none"===h)return;if("popup"===u||void 0===u)"binary_sensor"===t&&this._showPopupForDomain(t,i);else if("none"===u)return;if("popup"===p)"sensor"===t&&this._showPopupForDomain(t,i);else if("none"===p||void 0===p)return}_showPopupForDomain(e,t){this._selectedDomain=e,this._selectedDeviceClass=t,this._showPopup=!0,this.updateComplete.then((()=>{this.requestUpdate()}))}_getIcon(e,t,i){if(e in ot){const s=ot[e];if(i&&"object"==typeof s&&!s.on&&i in s)return s[i];if("object"==typeof s&&"on"in s&&"off"in s)return t?s.on:s.off}return""}_getDomainName(e,t){return"scene"===e?"Scene":"binary_sensor"!==e&&"sensor"!==e||!t?this.hass.localize(`component.${e}.entity_component._.name`):this.hass.localize(`component.${e}.entity_component.${t}.name`)}createCard(e){const t=document.createElement(`hui-${e.type}-card`);return t?(t.hass=this.hass,t.setConfig(e),t):V`<p>Invalid Configuration for card type: ${e.type}</p>`}_handleClick(){var e;(null===(e=this._config)||void 0===e?void 0:e.navigation_path)?this._handleNavigation():(this._showPopup=!0,this._selectedDomain=void 0,this._selectedDeviceClass=void 0,this.requestUpdate())}_closeDialog(){this._showPopup=!1}renderPopup(){var e,t;const i=this._entitiesByArea(this._config.area,this._devicesInArea(this._config.area,this._devices),this._entities,this.hass.states),s=this._area(this._config.area,this._areas);let o=(null===(e=this._config)||void 0===e?void 0:e.columns)?this._config.columns:4;const n=this._selectedDeviceClass?{[this._selectedDomain]:(i[this._selectedDomain]||[]).filter((e=>e.attributes.device_class===this._selectedDeviceClass))}:this._selectedDomain?{[this._selectedDomain]:i[this._selectedDomain]||[]}:i;let a=0;return Object.entries(n).forEach((([e,t])=>{const i=t.length;i>a&&(a=i)})),o=1===a?1:2===a?Math.min(o,2):3===a?Math.min(o,3):Math.min(o,4),this.style.setProperty("--columns",o.toString()),V`
-      <ha-dialog id="more-info-dialog" style="--columns: ${o};" open @closed="${this._closeDialog}">
+      <ha-dialog
+        id="more-info-dialog"
+        style="--columns: ${o};"
+        open
+        @closed="${this._closeDialog}"
+      >
         <div class="dialog-header">
           <ha-icon-button
             slot="navigationIcon"
@@ -106,22 +123,22 @@
             <h3>${(null===(t=this._config)||void 0===t?void 0:t.area_name)||(null==s?void 0:s.name)}</h3>
           </div>
         </div>
-  
+
         <div class="tile-container">
           ${Object.entries(n).map((([e,t])=>V`
-            <div class="domain-group">
-              <h4>
-                ${"binary_sensor"===e||"sensor"===e?this._getDomainName(e,this._selectedDeviceClass):this._getDomainName(e)}
-              </h4>
-              <div class="domain-entities">
-                ${t.map((t=>V`
-                  <div class="entity-card">
-                    ${this.createCard(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({type:"tile",entity:t.entity_id},"alarm_control_panel"===e&&{features:[{type:"alarm-modes",modes:["armed_home","armed_away","armed_night","armed_vacation","armed_custom_bypass","disarmed"]}]}),"light"===e&&{features:[{type:"light-brightness"}]}),"cover"===e&&{features:[{type:"cover-open-close"},{type:"cover-position"}]}),"vacuum"===e&&{features:[{type:"vacuum-commands",commands:["start_pause","stop","clean_spot","locate","return_home"]}]}),"climate"===e&&{features:[{type:"climate-hvac-modes",hvac_modes:["auto","heat_cool","heat","cool","dry","fan_only","off"]}]}),"media_player"===e&&{features:[{type:"media-player-volume-slider"}]}),"lock"===e&&{features:[{type:"lock-commands"}]}),"fan"===e&&{features:[{type:"fan-speed"}]}),"update"===e&&{features:[{type:"update-actions",backup:"ask"}]}))}
-                  </div>
-                `))}
+              <div class="domain-group">
+                <h4>
+                  ${"binary_sensor"===e||"sensor"===e?this._getDomainName(e,this._selectedDeviceClass):this._getDomainName(e)}
+                </h4>
+                <div class="domain-entities">
+                  ${t.map((t=>V`
+                      <div class="entity-card">
+                        ${this.createCard(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({type:"tile",entity:t.entity_id},"alarm_control_panel"===e&&{features:[{type:"alarm-modes",modes:["armed_home","armed_away","armed_night","armed_vacation","armed_custom_bypass","disarmed"]}]}),"light"===e&&{features:[{type:"light-brightness"}]}),"cover"===e&&{features:[{type:"cover-open-close"},{type:"cover-position"}]}),"vacuum"===e&&{features:[{type:"vacuum-commands",commands:["start_pause","stop","clean_spot","locate","return_home"]}]}),"climate"===e&&{features:[{type:"climate-hvac-modes",hvac_modes:["auto","heat_cool","heat","cool","dry","fan_only","off"]}]}),"media_player"===e&&{features:[{type:"media-player-volume-slider"}]}),"lock"===e&&{features:[{type:"lock-commands"}]}),"fan"===e&&{features:[{type:"fan-speed"}]}),"update"===e&&{features:[{type:"update-actions",backup:"ask"}]}))}
+                      </div>
+                    `))}
+                </div>
               </div>
-            </div>
-          `))}
+            `))}
         </div>
       </ha-dialog>
     `}static get styles(){return n`
@@ -287,72 +304,79 @@
 
 
     `}};Ye([me({attribute:!1})],nt.prototype,"hass",void 0),Ye([pe()],nt.prototype,"_config",void 0),Ye([pe()],nt.prototype,"_areas",void 0),Ye([pe()],nt.prototype,"_devices",void 0),Ye([pe()],nt.prototype,"_entities",void 0),Ye([pe()],nt.prototype,"_showPopup",void 0),nt=Ye([he("area-card-plus")],nt);class at{constructor(e){}get _$AU(){return this._$AM._$AU}_$AT(e,t,i){this._$Ct=e,this._$AM=t,this._$Ci=i}_$AS(e,t){return this.update(e,t)}update(e,t){return this.render(...t)}}const{I:rt}=ae,lt=()=>document.createComment(""),ct=(e,t,i)=>{const s=e._$AA.parentNode,o=void 0===t?e._$AB:t._$AA;if(void 0===i){const t=s.insertBefore(lt(),o),n=s.insertBefore(lt(),o);i=new rt(t,n,e,e.options)}else{const t=i._$AB.nextSibling,n=i._$AM,a=n!==e;if(a){let t;i._$AQ?.(e),i._$AM=e,void 0!==i._$AP&&(t=e._$AU)!==n._$AU&&i._$AP(t)}if(t!==o||a){let e=i._$AA;for(;e!==t;){const t=e.nextSibling;s.insertBefore(e,o),e=t}}}return i},ht=(e,t,i=e)=>(e._$AI(t,i),e),dt={},ut=e=>{e._$AP?.(!1,!0);let t=e._$AA;const i=e._$AB.nextSibling;for(;t!==i;){const e=t.nextSibling;t.remove(),t=e}},mt=(e,t,i)=>{const s=new Map;for(let o=t;o<=i;o++)s.set(e[o],o);return s},pt=(e=>(...t)=>({_$litDirective$:e,values:t}))(class extends at{constructor(e){if(super(e),2!==e.type)throw Error("repeat() can only be used in text expressions")}dt(e,t,i){let s;void 0===i?i=t:void 0!==t&&(s=t);const o=[],n=[];let a=0;for(const t of e)o[a]=s?s(t,a):a,n[a]=i(t,a),a++;return{values:n,keys:o}}render(e,t,i){return this.dt(e,t,i).values}update(e,[t,i,s]){const o=(e=>e._$AH)(e),{values:n,keys:a}=this.dt(t,i,s);if(!Array.isArray(o))return this.ut=a,n;const r=this.ut??=[],l=[];let c,h,d=0,u=o.length-1,m=0,p=n.length-1;for(;d<=u&&m<=p;)if(null===o[d])d++;else if(null===o[u])u--;else if(r[d]===a[m])l[m]=ht(o[d],n[m]),d++,m++;else if(r[u]===a[p])l[p]=ht(o[u],n[p]),u--,p--;else if(r[d]===a[p])l[p]=ht(o[d],n[p]),ct(e,l[p+1],o[d]),d++,p--;else if(r[u]===a[m])l[m]=ht(o[u],n[m]),ct(e,o[d],o[u]),u--,m++;else if(void 0===c&&(c=mt(a,m,p),h=mt(r,d,u)),c.has(r[d]))if(c.has(r[u])){const t=h.get(a[m]),i=void 0!==t?o[t]:null;if(null===i){const t=ct(e,o[d]);ht(t,n[m]),l[m]=t}else l[m]=ht(i,n[m]),ct(e,o[d],i),o[t]=null;m++}else ut(o[u]),u--;else ut(o[d]),d++;for(;m<=p;){const t=ct(e,l[p+1]);ht(t,n[m]),l[m++]=t}for(;d<=u;){const e=o[d++];null!==e&&ut(e)}return this.ut=a,((e,t=dt)=>{e._$AH=t})(e,l),q}});var _t=function(e,t,i,s){var o,n=arguments.length,a=n<3?t:null===s?s=Object.getOwnPropertyDescriptor(t,i):s;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)a=Reflect.decorate(e,t,i,s);else for(var r=e.length-1;r>=0;r--)(o=e[r])&&(a=(n<3?o(a):n>3?o(t,i,a):o(t,i))||a);return n>3&&a&&Object.defineProperty(t,i,a),a};class ft extends le{constructor(){super(...arguments),this.SelectOptions=[],this._entityKeys=new WeakMap}_getKey(e){return this._entityKeys.has(e)||this._entityKeys.set(e,Math.random().toString()),this._entityKeys.get(e)}render(){return this.hass?V`
-        <div class="customization">
-          ${this.customization&&pt(this.customization,(e=>this._getKey(e)),((e,t)=>V`
-                <div class="customize-item">
-                  <ha-select
-                    label=${this.hass.localize("ui.panel.lovelace.editor.features.edit")}
-                    name="Customize"
-                    class="select-customization"
-                    naturalMenuWidth
-                    fixedMenuPosition
-                    .value=${e.type}
-                    @closed=${e=>e.stopPropagation()}
-                    @value-changed=${this._valueChanged}
-                  >
-                    ${this.SelectOptions.map((e=>V`<mwc-list-item .value=${e.value}>${e.label}</mwc-list-item>`))}
-                  </ha-select>
-  
-                  <ha-icon-button
-                    .label="Remove"
-                    .path=${Ze}
-                    class="remove-icon"
-                    .index=${t}
-                    @click=${this._removeRow}
-                  ></ha-icon-button>
-  
-                  <ha-icon-button
-                    .label="Edit"
-                    .path=${"M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"}
-                    class="edit-icon"
-                    .index=${t}
-                    @click="${this._editRow}"
-                  ></ha-icon-button>
-                </div>
-              `))}
-  
-          <div class="add-item row">
-            <ha-select
-              label=${this.hass.localize("ui.panel.lovelace.editor.features.add")}
-              name="Customize"
-              class="add-customization"
-              naturalMenuWidth
-              fixedMenuPosition
-              @closed=${e=>e.stopPropagation()}
-              @click=${this._addRow}
-            >
-              ${this.SelectOptions.map((e=>V`<mwc-list-item .value=${e.value}>${e.label}</mwc-list-item>`))}
-            </ha-select>
-          </div>
+      <div class="customization">
+        ${this.customization&&pt(this.customization,(e=>this._getKey(e)),((e,t)=>V`
+            <div class="customize-item">
+              <ha-select
+                label=${this.hass.localize("ui.panel.lovelace.editor.features.edit")}
+                name="Customize"
+                class="select-customization"
+                naturalMenuWidth
+                fixedMenuPosition
+                .value=${e.type}
+                @closed=${e=>e.stopPropagation()}
+                @value-changed=${this._valueChanged}
+              >
+                ${this.SelectOptions.map((e=>V`<mwc-list-item .value=${e.value}
+                      >${e.label}</mwc-list-item
+                    >`))}
+              </ha-select>
+
+              <ha-icon-button
+                .label="Remove"
+                .path=${Ze}
+                class="remove-icon"
+                .index=${t}
+                @click=${this._removeRow}
+              ></ha-icon-button>
+
+              <ha-icon-button
+                .label="Edit"
+                .path=${"M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"}
+                class="edit-icon"
+                .index=${t}
+                @click="${this._editRow}"
+              ></ha-icon-button>
+            </div>
+          `))}
+
+        <div class="add-item row">
+          <ha-select
+            label=${this.hass.localize("ui.panel.lovelace.editor.features.add")}
+            name="Customize"
+            class="add-customization"
+            naturalMenuWidth
+            fixedMenuPosition
+            @closed=${e=>e.stopPropagation()}
+            @click=${this._addRow}
+          >
+            ${this.SelectOptions.map((e=>V`<mwc-list-item .value=${e.value}
+                  >${e.label}</mwc-list-item
+                >`))}
+          </ha-select>
         </div>
-      `:W}_valueChanged(e){if(!this.customization||!this.hass)return;const t=e.detail.value,i=e.target.index,s=this.customization.concat();s[i]=Object.assign(Object.assign({},s[i]),{type:t||""}),Ke(this,this.customizationChangedEvent,s)}_removeRow(e){e.stopPropagation();const t=e.currentTarget.index;if(null!=t){const e=this.customization.concat();e.splice(t,1),Ke(this,this.customizationChangedEvent,e)}}_editRow(e){e.stopPropagation();const t=e.target.index;null!=t&&Ke(this,"edit-item",t)}_addRow(e){if(e.stopPropagation(),!this.customization||!this.hass)return;const t=this.shadowRoot.querySelector(".add-customization");if(!t||!t.value)return;const i={type:t.value};Ke(this,this.customizationChangedEvent,[...this.customization,i]),t.value=""}static get styles(){return n`
-        .customization {
-          margin-top: 16px;
-        }
-        .customize-item, .add-item {
-          display: flex;
-          align-items: center;
-        }
-        .add-customization, .select-customization {        
-          width: 100%;
-          margin-top: 8px;
-        }
-        .remove-icon, .edit-icon {
-          --mdc-icon-button-size: 36px;
-          color: var(--secondary-text-color);
-          padding-left: 4px;
-        }
-      `}}_t([me({attribute:!1})],ft.prototype,"hass",void 0),_t([me({type:Array})],ft.prototype,"SelectOptions",void 0);let gt=class extends ft{constructor(){super(...arguments),this.customizationChangedEvent="config-changed"}get customization(){return this.customization_domain}};_t([me({attribute:!1})],gt.prototype,"customization_domain",void 0),gt=_t([he("domain-items-editor")],gt);let vt=class extends ft{constructor(){super(...arguments),this.customizationChangedEvent="config-changed"}get customization(){return this.customization_alert}};_t([me({attribute:!1})],vt.prototype,"customization_alert",void 0),vt=_t([he("alert-items-editor")],vt);let bt=class extends ft{constructor(){super(...arguments),this.customizationChangedEvent="config-changed"}get customization(){return this.customization_sensor}};_t([me({attribute:!1})],bt.prototype,"customization_sensor",void 0),bt=_t([he("sensor-items-editor")],bt);var yt=function(e,t,i,s){var o,n=arguments.length,a=n<3?t:null===s?s=Object.getOwnPropertyDescriptor(t,i):s;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)a=Reflect.decorate(e,t,i,s);else for(var r=e.length-1;r>=0;r--)(o=e[r])&&(a=(n<3?o(a):n>3?o(t,i,a):o(t,i))||a);return n>3&&a&&Object.defineProperty(t,i,a),a};let $t=class extends le{constructor(){super(...arguments),this.useSensorSchema=!1,this._schemadomain=ye((()=>[{name:"tap_action",selector:{select:{options:[{label:"None",value:"none"},{label:"Toggle",value:"toggle"},{label:"Popup",value:"popup"}]}}},{name:"color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"icon",selector:{icon:{}}}])),this._schemaalert=ye((()=>[{name:"tap_action",selector:{select:{options:[{label:"None",value:"none"},{label:"Popup",value:"popup"}]}}},{name:"color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"icon",selector:{icon:{}}}])),this._schemasensor=ye((()=>[{name:"tap_action",selector:{select:{options:[{label:"None",value:"none"},{label:"Popup",value:"popup"}]}}},{name:"color",selector:{ui_color:{default_color:"state",include_state:!0}}}])),this._computeLabelCallback=e=>{switch(e.name){case"icon":return this.hass.localize("ui.panel.lovelace.editor.card.generic.icon");case"color":return this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"enable_popup_view":return this.hass.localize("ui.common.enable")+" "+this.hass.localize("ui.panel.lovelace.editor.action-editor.actions.more-info");case"disable_toggle_action":return this.hass.localize("ui.common.disable")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.tap_action");case"tap_action":return this.hass.localize("ui.panel.lovelace.editor.card.generic.tap_action");default:return this.hass.localize(`ui.panel.lovelace.editor.card.area.${e.name}`)}}}render(){if(!this.hass||!this.config)return V``;let e;switch(this.getSchema){case"sensor":e=this._schemasensor();break;case"domain":e=this._schemadomain();break;case"alert":e=this._schemaalert()}const t=Object.assign({},this._config);return V`
+      </div>
+    `:W}_valueChanged(e){if(!this.customization||!this.hass)return;const t=e.detail.value,i=e.target.index,s=this.customization.concat();s[i]=Object.assign(Object.assign({},s[i]),{type:t||""}),Ke(this,this.customizationChangedEvent,s)}_removeRow(e){e.stopPropagation();const t=e.currentTarget.index;if(null!=t){const e=this.customization.concat();e.splice(t,1),Ke(this,this.customizationChangedEvent,e)}}_editRow(e){e.stopPropagation();const t=e.target.index;null!=t&&Ke(this,"edit-item",t)}_addRow(e){if(e.stopPropagation(),!this.customization||!this.hass)return;const t=this.shadowRoot.querySelector(".add-customization");if(!t||!t.value)return;const i={type:t.value};Ke(this,this.customizationChangedEvent,[...this.customization,i]),t.value=""}static get styles(){return n`
+      .customization {
+        margin-top: 16px;
+      }
+      .customize-item,
+      .add-item {
+        display: flex;
+        align-items: center;
+      }
+      .add-customization,
+      .select-customization {
+        width: 100%;
+        margin-top: 8px;
+      }
+      .remove-icon,
+      .edit-icon {
+        --mdc-icon-button-size: 36px;
+        color: var(--secondary-text-color);
+        padding-left: 4px;
+      }
+    `}}_t([me({attribute:!1})],ft.prototype,"hass",void 0),_t([me({type:Array})],ft.prototype,"SelectOptions",void 0);let gt=class extends ft{constructor(){super(...arguments),this.customizationChangedEvent="config-changed"}get customization(){return this.customization_domain}};_t([me({attribute:!1})],gt.prototype,"customization_domain",void 0),gt=_t([he("domain-items-editor")],gt);let vt=class extends ft{constructor(){super(...arguments),this.customizationChangedEvent="config-changed"}get customization(){return this.customization_alert}};_t([me({attribute:!1})],vt.prototype,"customization_alert",void 0),vt=_t([he("alert-items-editor")],vt);let bt=class extends ft{constructor(){super(...arguments),this.customizationChangedEvent="config-changed"}get customization(){return this.customization_sensor}};_t([me({attribute:!1})],bt.prototype,"customization_sensor",void 0),bt=_t([he("sensor-items-editor")],bt);var yt=function(e,t,i,s){var o,n=arguments.length,a=n<3?t:null===s?s=Object.getOwnPropertyDescriptor(t,i):s;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)a=Reflect.decorate(e,t,i,s);else for(var r=e.length-1;r>=0;r--)(o=e[r])&&(a=(n<3?o(a):n>3?o(t,i,a):o(t,i))||a);return n>3&&a&&Object.defineProperty(t,i,a),a};let $t=class extends le{constructor(){super(...arguments),this.useSensorSchema=!1,this._schemadomain=ye((()=>[{name:"tap_action",selector:{select:{options:[{label:"None",value:"none"},{label:"Toggle",value:"toggle"},{label:"Popup",value:"popup"}]}}},{name:"color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"icon",selector:{icon:{}}}])),this._schemaalert=ye((()=>[{name:"tap_action",selector:{select:{options:[{label:"None",value:"none"},{label:"Popup",value:"popup"}]}}},{name:"color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"icon",selector:{icon:{}}}])),this._schemasensor=ye((()=>[{name:"tap_action",selector:{select:{options:[{label:"None",value:"none"},{label:"Popup",value:"popup"}]}}},{name:"color",selector:{ui_color:{default_color:"state",include_state:!0}}}])),this._computeLabelCallback=e=>{switch(e.name){case"icon":return this.hass.localize("ui.panel.lovelace.editor.card.generic.icon");case"color":return this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"enable_popup_view":return this.hass.localize("ui.common.enable")+" "+this.hass.localize("ui.panel.lovelace.editor.action-editor.actions.more-info");case"disable_toggle_action":return this.hass.localize("ui.common.disable")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.tap_action");case"tap_action":return this.hass.localize("ui.panel.lovelace.editor.card.generic.tap_action");default:return this.hass.localize(`ui.panel.lovelace.editor.card.area.${e.name}`)}}}render(){if(!this.hass||!this.config)return V``;let e;switch(this.getSchema){case"sensor":e=this._schemasensor();break;case"domain":e=this._schemadomain();break;case"alert":e=this._schemaalert()}const t=Object.assign({},this._config);return V`
       <ha-form
         .hass=${this.hass}
         .data=${t}
@@ -387,7 +411,7 @@
         flex: 1 1 0%;
         padding-right: 4px;
       }
-    `}};yt([me({attribute:!1})],$t.prototype,"config",void 0),yt([me({attribute:!1})],$t.prototype,"hass",void 0),yt([me({type:Boolean})],$t.prototype,"useSensorSchema",void 0),yt([pe()],$t.prototype,"getSchema",void 0),yt([pe()],$t.prototype,"_config",void 0),$t=yt([he("item-editor")],$t);var At=function(e,t,i,s){var o,n=arguments.length,a=n<3?t:null===s?s=Object.getOwnPropertyDescriptor(t,i):s;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)a=Reflect.decorate(e,t,i,s);else for(var r=e.length-1;r>=0;r--)(o=e[r])&&(a=(n<3?o(a):n>3?o(t,i,a):o(t,i))||a);return n>3&&a&&Object.defineProperty(t,i,a),a},wt=function(e,t,i,s){return new(i||(i=Promise))((function(o,n){function a(e){try{l(s.next(e))}catch(e){n(e)}}function r(e){try{l(s.throw(e))}catch(e){n(e)}}function l(e){var t;e.done?o(e.value):(t=e.value,t instanceof i?t:new i((function(e){e(t)}))).then(a,r)}l((s=s.apply(e,t||[])).next())}))};let xt=class extends le{constructor(){super(...arguments),this._subElementEditorDomain=void 0,this._subElementEditorAlert=void 0,this._subElementEditorSensor=void 0,this._schema=ye((()=>[{name:"area",selector:{area:{}}},{name:"",type:"grid",schema:[{name:"navigation_path",required:!1,selector:{navigation:{}}},{name:"theme",required:!1,selector:{theme:{}}}]},{name:"appearance",flatten:!0,type:"expandable",icon:"mdi:palette",schema:[{name:"area_icon",selector:{icon:{}}},{name:"area_icon_color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"area_name",selector:{text:{}}},{name:"area_name_color",selector:{ui_color:{default_color:"state",include_state:!0}}}]}])),this._binaryschema=ye((e=>[{name:"alert_classes",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"alert_color",selector:{ui_color:{default_color:"state",include_state:!0}}}])),this._sensorschema=ye((e=>[{name:"sensor_classes",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"sensor_color",selector:{ui_color:{default_color:"state",include_state:!0}}}])),this._toggleschema=ye((e=>[{name:"toggle_domains",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"domain_color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"show_active",selector:{boolean:{}}}])),this._popupschema=ye((e=>[{name:"columns",selector:{number:{min:1,max:4,mode:"box"}}},{name:"popup_domains",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"hidden_entities",selector:{entity:{multiple:!0}}},{name:"extra_entities",selector:{entity:{multiple:!0}}},{name:"hide_unavailable",selector:{boolean:{}}}])),this._binaryClassesForArea=ye((e=>this._classesForArea(e,"binary_sensor"))),this._sensorClassesForArea=ye(((e,t)=>this._classesForArea(e,"sensor",t))),this._toggleDomainsForArea=ye((e=>this._classesForArea(e,"toggle"))),this._allDomainsForArea=ye((e=>this._classesForArea(e,"all"))),this._buildBinaryOptions=ye(((e,t)=>this._buildOptions("binary_sensor",e,t))),this._buildSensorOptions=ye(((e,t)=>this._buildOptions("sensor",e,t))),this._buildToggleOptions=ye(((e,t)=>this._buildOptions("toggle",e,t))),this._buildAllOptions=ye(((e,t)=>this._buildOptions("all",e,t))),this._computeLabelCallback=e=>{switch(e.name){case"theme":return`${this.hass.localize("ui.panel.lovelace.editor.card.generic.theme")} (${this.hass.localize("ui.panel.lovelace.editor.card.config.optional")})`;case"area":return this.hass.localize("ui.panel.lovelace.editor.card.area.name");case"navigation_path":return this.hass.localize("ui.panel.lovelace.editor.action-editor.navigation_path");case"area_name":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.name");case"area_icon":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.icon");case"area_name_color":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"area_icon_color":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.icon")+" "+this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"alert_color":case"sensor_color":case"domain_color":return this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"columns":return this.hass.localize("ui.components.grid-size-picker.columns");case"appearance":return this.hass.localize("ui.panel.lovelace.editor.card.tile.appearance");case"toggle_domains":return this.hass.localize("ui.panel.lovelace.editor.cardpicker.domain");case"popup":return"Popup";case"popup_domains":return"Popup "+this.hass.localize("ui.panel.lovelace.editor.cardpicker.domain");case"extra_entities":return this.hass.localize("ui.common.add")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.entities")+":";case"hidden_entities":return this.hass.localize("ui.common.hide")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.entities")+":";case"hide_unavailable":return this.hass.localize("ui.common.hide")+" "+this.hass.localize("state.default.unavailable");case"show_active":return this.hass.localize("ui.common.hide")+" "+this.hass.localize("ui.components.entity.entity-state-picker.state")+" "+this.hass.localize("component.binary_sensor.entity_component._.state.off");default:return this.hass.localize(`ui.panel.lovelace.editor.card.area.${e.name}`)}}}firstUpdated(){var e,t;return wt(this,void 0,void 0,(function*(){customElements.get("ha-form")&&customElements.get("hui-action-editor")||null===(e=customElements.get("hui-button-card"))||void 0===e||e.getConfigElement(),customElements.get("ha-entity-picker")||null===(t=customElements.get("hui-entities-card"))||void 0===t||t.getConfigElement()}))}_classesForArea(e,t,i){var s;let o;if("toggle"===t)return o=Object.values(this.hass.entities).filter((t=>{var i;return(tt.includes(Ae(t.entity_id))||et.includes(Ae(t.entity_id)))&&!t.hidden&&(t.area_id===e||t.device_id&&(null===(i=this.hass.devices[t.device_id])||void 0===i?void 0:i.area_id)===e)})),[...new Set(o.map((e=>Ae(e.entity_id))))];if("all"===t){const t=(null===(s=this._config)||void 0===s?void 0:s.extra_entities)||[];let i=Object.values(this.hass.entities).filter((t=>{var i;return!t.hidden&&(t.area_id===e||t.device_id&&(null===(i=this.hass.devices[t.device_id])||void 0===i?void 0:i.area_id)===e)}));const o=t.map((e=>this.hass.states[e])).filter((e=>void 0!==e));return i=[...i,...o],[...new Set(i.map((e=>Ae(e.entity_id))))]}{o=Object.values(this.hass.entities).filter((i=>{var s;return Ae(i.entity_id)===t&&!i.entity_category&&!i.hidden&&(i.area_id===e||i.device_id&&(null===(s=this.hass.devices[i.device_id])||void 0===s?void 0:s.area_id)===e)}));const s=o.map((e=>{var t;return(null===(t=this.hass.states[e.entity_id])||void 0===t?void 0:t.attributes.device_class)||""})).filter((e=>e&&("sensor"!==t||!i||i.includes(e))));return[...new Set(s)]}}_buildOptions(e,t,i){const s=[...new Set([...t,...i])].map((t=>({value:t,label:"scene"===t?"Scene":"toggle"===e||"all"===e?this.hass.localize(`component.${t}.entity_component._.name`)||t:this.hass.localize(`component.${e}.entity_component.${t}.name`)||t})));return s.sort(((e,t)=>((e,t,i)=>(null===Intl||void 0===Intl?void 0:Intl.Collator)?He(i).compare(e,t):Le(e.toLowerCase(),t.toLowerCase()))(e.label,t.label,this.hass.locale.language))),s}setConfig(e){this._config=Object.assign(Object.assign({},e),{columns:e.columns||4,customization_domain:e.customization_domain||[],customization_alert:e.customization_alert||[],customization_sensor:e.customization_sensor||[]})}updated(e){const t=Object.create(null,{updated:{get:()=>super.updated}});return wt(this,void 0,void 0,(function*(){if(t.updated.call(this,e),this.hass&&this._config){if(e.has("_config")){const t=e.get("_config"),i=null==t?void 0:t.area,s=this._config.area,o=(null==t?void 0:t.extra_entities)||[],n=this._config.extra_entities||[],a=o.length!==n.length||!o.every((e=>n.includes(e)));if(i!==s){const e=this._toggleDomainsForArea(s),t=this._allDomainsForArea(s),i=e.sort(((e,t)=>tt.indexOf(e)-tt.indexOf(t))),o=t.sort(((e,t)=>it.indexOf(e)-it.indexOf(t)));this._config.toggle_domains=[...i],this._config.popup_domains=[...o],this.requestUpdate()}if(a){for(const e of n){const t=Ae(e);this._config.popup_domains.includes(t)||this._config.popup_domains.push(t)}this.requestUpdate()}}if(!this._numericDeviceClasses){const{numeric_device_classes:e}=yield(i=this.hass,ze(void 0,void 0,void 0,(function*(){return Ne||(Ne=i.callWS({type:"sensor/numeric_device_classes"}),Ne)})));this._numericDeviceClasses=e}var i}}))}_valueChanged(e){this._config=e.detail.value,this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this._config}}))}_editItem(e,t){if(e.stopPropagation(),!this._config||!this.hass)return;const i=e.detail;this[`_subElementEditor${t}`]={index:i}}_edit_itemDomain(e){this._editItem(e,"Domain")}_edit_itemAlert(e){this._editItem(e,"Alert")}_edit_itemSensor(e){this._editItem(e,"Sensor")}_customizationChanged(e,t){e.stopPropagation(),this._config&&this.hass&&Ke(this,"config-changed",{config:Object.assign(Object.assign({},this._config),{[`customization_${t}`]:e.detail})})}_customizationChangedDomain(e){this._customizationChanged(e,"domain")}_customizationChangedAlert(e){this._customizationChanged(e,"alert")}_customizationChangedSensor(e){this._customizationChanged(e,"sensor")}_renderSubElementEditor(e,t,i){var s,o,n,a;const r=this[`_subElementEditor${e.charAt(0).toUpperCase()+e.slice(1)}`];return V`
+    `}};yt([me({attribute:!1})],$t.prototype,"config",void 0),yt([me({attribute:!1})],$t.prototype,"hass",void 0),yt([me({type:Boolean})],$t.prototype,"useSensorSchema",void 0),yt([pe()],$t.prototype,"getSchema",void 0),yt([pe()],$t.prototype,"_config",void 0),$t=yt([he("item-editor")],$t);var At=function(e,t,i,s){var o,n=arguments.length,a=n<3?t:null===s?s=Object.getOwnPropertyDescriptor(t,i):s;if("object"==typeof Reflect&&"function"==typeof Reflect.decorate)a=Reflect.decorate(e,t,i,s);else for(var r=e.length-1;r>=0;r--)(o=e[r])&&(a=(n<3?o(a):n>3?o(t,i,a):o(t,i))||a);return n>3&&a&&Object.defineProperty(t,i,a),a},wt=function(e,t,i,s){return new(i||(i=Promise))((function(o,n){function a(e){try{l(s.next(e))}catch(e){n(e)}}function r(e){try{l(s.throw(e))}catch(e){n(e)}}function l(e){var t;e.done?o(e.value):(t=e.value,t instanceof i?t:new i((function(e){e(t)}))).then(a,r)}l((s=s.apply(e,t||[])).next())}))};let xt=class extends le{constructor(){super(...arguments),this._subElementEditorDomain=void 0,this._subElementEditorAlert=void 0,this._subElementEditorSensor=void 0,this._schema=ye((()=>[{name:"area",selector:{area:{}}},{name:"",type:"grid",schema:[{name:"navigation_path",required:!1,selector:{navigation:{}}},{name:"theme",required:!1,selector:{theme:{}}}]},{name:"appearance",flatten:!0,type:"expandable",icon:"mdi:palette",schema:[{name:"area_icon",selector:{icon:{}}},{name:"area_icon_color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"area_name",selector:{text:{}}},{name:"area_name_color",selector:{ui_color:{default_color:"state",include_state:!0}}}]}])),this._binaryschema=ye((e=>[{name:"alert_classes",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"alert_color",selector:{ui_color:{default_color:"state",include_state:!0}}}])),this._sensorschema=ye((e=>[{name:"sensor_classes",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"sensor_color",selector:{ui_color:{default_color:"state",include_state:!0}}}])),this._toggleschema=ye((e=>[{name:"toggle_domains",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"domain_color",selector:{ui_color:{default_color:"state",include_state:!0}}},{name:"show_active",selector:{boolean:{}}}])),this._popupschema=ye((e=>[{name:"columns",selector:{number:{min:1,max:4,mode:"box"}}},{name:"popup_domains",selector:{select:{reorder:!0,multiple:!0,custom_value:!0,options:e}}},{name:"hidden_entities",selector:{entity:{multiple:!0}}},{name:"extra_entities",selector:{entity:{multiple:!0}}},{name:"hide_unavailable",selector:{boolean:{}}}])),this._binaryClassesForArea=ye((e=>this._classesForArea(e,"binary_sensor"))),this._sensorClassesForArea=ye(((e,t)=>this._classesForArea(e,"sensor",t))),this._toggleDomainsForArea=ye((e=>this._classesForArea(e,"toggle"))),this._allDomainsForArea=ye((e=>this._classesForArea(e,"all"))),this._buildBinaryOptions=ye(((e,t)=>this._buildOptions("binary_sensor",e,t))),this._buildSensorOptions=ye(((e,t)=>this._buildOptions("sensor",e,t))),this._buildToggleOptions=ye(((e,t)=>this._buildOptions("toggle",e,t))),this._buildAllOptions=ye(((e,t)=>this._buildOptions("all",e,t))),this._computeLabelCallback=e=>{switch(e.name){case"theme":return`${this.hass.localize("ui.panel.lovelace.editor.card.generic.theme")} (${this.hass.localize("ui.panel.lovelace.editor.card.config.optional")})`;case"area":return this.hass.localize("ui.panel.lovelace.editor.card.area.name");case"navigation_path":return this.hass.localize("ui.panel.lovelace.editor.action-editor.navigation_path");case"area_name":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.name");case"area_icon":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.icon");case"area_name_color":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"area_icon_color":return this.hass.localize("ui.panel.lovelace.editor.card.area.name")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.icon")+" "+this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"alert_color":case"sensor_color":case"domain_color":return this.hass.localize("ui.panel.lovelace.editor.card.tile.color");case"columns":return this.hass.localize("ui.components.grid-size-picker.columns");case"appearance":return this.hass.localize("ui.panel.lovelace.editor.card.tile.appearance");case"toggle_domains":return this.hass.localize("ui.panel.lovelace.editor.cardpicker.domain");case"popup":return"Popup";case"popup_domains":return"Popup "+this.hass.localize("ui.panel.lovelace.editor.cardpicker.domain");case"extra_entities":return this.hass.localize("ui.common.add")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.entities")+":";case"hidden_entities":return this.hass.localize("ui.common.hide")+" "+this.hass.localize("ui.panel.lovelace.editor.card.generic.entities")+":";case"hide_unavailable":return this.hass.localize("ui.common.hide")+" "+this.hass.localize("state.default.unavailable");case"show_active":return this.hass.localize("ui.common.hide")+" "+this.hass.localize("ui.components.entity.entity-state-picker.state")+" "+this.hass.localize("component.binary_sensor.entity_component._.state.off");default:return this.hass.localize(`ui.panel.lovelace.editor.card.area.${e.name}`)}}}firstUpdated(){var e,t;return wt(this,void 0,void 0,(function*(){customElements.get("ha-form")&&customElements.get("hui-action-editor")||null===(e=customElements.get("hui-button-card"))||void 0===e||e.getConfigElement(),customElements.get("ha-entity-picker")||null===(t=customElements.get("hui-entities-card"))||void 0===t||t.getConfigElement()}))}_classesForArea(e,t,i){var s;let o;if("toggle"===t)return o=Object.values(this.hass.entities).filter((t=>{var i;return(tt.includes(Ae(t.entity_id))||et.includes(Ae(t.entity_id)))&&!t.hidden&&(t.area_id===e||t.device_id&&(null===(i=this.hass.devices[t.device_id])||void 0===i?void 0:i.area_id)===e)})),[...new Set(o.map((e=>Ae(e.entity_id))))];if("all"===t){const t=(null===(s=this._config)||void 0===s?void 0:s.extra_entities)||[];let i=Object.values(this.hass.entities).filter((t=>{var i;return!t.hidden&&(t.area_id===e||t.device_id&&(null===(i=this.hass.devices[t.device_id])||void 0===i?void 0:i.area_id)===e)}));const o=t.map((e=>this.hass.states[e])).filter((e=>void 0!==e));return i=[...i,...o],[...new Set(i.map((e=>Ae(e.entity_id))))]}{o=Object.values(this.hass.entities).filter((i=>{var s;return Ae(i.entity_id)===t&&!i.entity_category&&!i.hidden&&(i.area_id===e||i.device_id&&(null===(s=this.hass.devices[i.device_id])||void 0===s?void 0:s.area_id)===e)}));const s=o.map((e=>{var t;return(null===(t=this.hass.states[e.entity_id])||void 0===t?void 0:t.attributes.device_class)||""})).filter((e=>e&&("sensor"!==t||!i||i.includes(e))));return[...new Set(s)]}}_buildOptions(e,t,i){const s=[...new Set([...t,...i])].map((t=>({value:t,label:"scene"===t?"Scene":"toggle"===e||"all"===e?this.hass.localize(`component.${t}.entity_component._.name`)||t:this.hass.localize(`component.${e}.entity_component.${t}.name`)||t})));return s.sort(((e,t)=>((e,t,i)=>(null===Intl||void 0===Intl?void 0:Intl.Collator)?He(i).compare(e,t):Le(e.toLowerCase(),t.toLowerCase()))(e.label,t.label,this.hass.locale.language))),s}setConfig(e){this._config=Object.assign(Object.assign({},e),{columns:e.columns||4,customization_domain:e.customization_domain||[],customization_alert:e.customization_alert||[],customization_sensor:e.customization_sensor||[]})}updated(e){const t=Object.create(null,{updated:{get:()=>super.updated}});return wt(this,void 0,void 0,(function*(){if(t.updated.call(this,e),this.hass&&this._config){if(e.has("_config")){const t=e.get("_config"),i=null==t?void 0:t.area,s=this._config.area,o=(null==t?void 0:t.extra_entities)||[],n=this._config.extra_entities||[],a=o.length!==n.length||!o.every((e=>n.includes(e)));if(void 0!==i&&i!==s){const e=this._toggleDomainsForArea(s),t=this._allDomainsForArea(s),i=e.sort(((e,t)=>tt.indexOf(e)-tt.indexOf(t))),o=t.sort(((e,t)=>it.indexOf(e)-it.indexOf(t)));this._config.toggle_domains=[...i],this._config.popup_domains=[...o],this.requestUpdate()}if(a){for(const e of n){const t=Ae(e);this._config.popup_domains.includes(t)||this._config.popup_domains.push(t)}this.requestUpdate()}}if(!this._numericDeviceClasses){const{numeric_device_classes:e}=yield(i=this.hass,ze(void 0,void 0,void 0,(function*(){return Ne||(Ne=i.callWS({type:"sensor/numeric_device_classes"}),Ne)})));this._numericDeviceClasses=e}var i}}))}_valueChanged(e){this._config=e.detail.value,this.dispatchEvent(new CustomEvent("config-changed",{detail:{config:this._config}}))}_editItem(e,t){if(e.stopPropagation(),!this._config||!this.hass)return;const i=e.detail;this[`_subElementEditor${t}`]={index:i}}_edit_itemDomain(e){this._editItem(e,"Domain")}_edit_itemAlert(e){this._editItem(e,"Alert")}_edit_itemSensor(e){this._editItem(e,"Sensor")}_customizationChanged(e,t){e.stopPropagation(),this._config&&this.hass&&Ke(this,"config-changed",{config:Object.assign(Object.assign({},this._config),{[`customization_${t}`]:e.detail})})}_customizationChangedDomain(e){this._customizationChanged(e,"domain")}_customizationChangedAlert(e){this._customizationChanged(e,"alert")}_customizationChangedSensor(e){this._customizationChanged(e,"sensor")}_renderSubElementEditor(e,t,i){var s,o,n,a;const r=this[`_subElementEditor${e.charAt(0).toUpperCase()+e.slice(1)}`];return V`
       <div class="header">
         <div class="back-title">
           <mwc-icon-button @click=${t}>
@@ -398,7 +422,7 @@
       <item-editor
         .hass=${this.hass}
         .config=${null!==(a=null===(o=null===(s=this._config)||void 0===s?void 0:s[`customization_${e}`])||void 0===o?void 0:o[null!==(n=null==r?void 0:r.index)&&void 0!==n?n:0])&&void 0!==a?a:{}}
-        .getSchema=${e} 
+        .getSchema=${e}
         @config-changed=${i}
       >
       </item-editor>
@@ -418,19 +442,20 @@
         </div>
         <div class="content">
           <ha-form
-          .hass=${this.hass}
-          .data=${r}
-          .schema=${s}
-          .computeLabel=${this._computeLabelCallback}
-          @value-changed=${this._valueChanged}
+            .hass=${this.hass}
+            .data=${r}
+            .schema=${s}
+            .computeLabel=${this._computeLabelCallback}
+            @value-changed=${this._valueChanged}
           ></ha-form>
           <alert-items-editor
             .hass=${this.hass}
             .customization_alert=${this._config.customization_alert}
             .SelectOptions=${this.binarySelectOptions}
             @edit-item=${this._edit_itemAlert}
-            @config-changed=${this._customizationChangedAlert}>
-          </alert-items-editor>          
+            @config-changed=${this._customizationChangedAlert}
+          >
+          </alert-items-editor>
         </div>
       </ha-expansion-panel>
 
@@ -441,18 +466,19 @@
         </div>
         <div class="content">
           <ha-form
-          .hass=${this.hass}
-          .data=${r}
-          .schema=${o}
-          .computeLabel=${this._computeLabelCallback}
-          @value-changed=${this._valueChanged}
+            .hass=${this.hass}
+            .data=${r}
+            .schema=${o}
+            .computeLabel=${this._computeLabelCallback}
+            @value-changed=${this._valueChanged}
           ></ha-form>
           <sensor-items-editor
             .hass=${this.hass}
             .customization_sensor=${this._config.customization_sensor}
             .SelectOptions=${this.sensorSelectOptions}
             @edit-item=${this._edit_itemSensor}
-            @config-changed=${this._customizationChangedSensor}>
+            @config-changed=${this._customizationChangedSensor}
+          >
           </sensor-items-editor>
         </div>
       </ha-expansion-panel>
@@ -460,30 +486,31 @@
       <ha-expansion-panel outlined class="main" .name="toggle_domains">
         <div slot="header" role="heading" aria-level="3">
           <ha-svg-icon .path=${"M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15Z"}></ha-svg-icon>
-            ${this._computeLabelCallback({name:"toggle_domains"})}
+          ${this._computeLabelCallback({name:"toggle_domains"})}
         </div>
         <div class="content">
           <ha-form
-          .hass=${this.hass}
-          .data=${r}
-          .schema=${n}
-          .computeLabel=${this._computeLabelCallback}
-          @value-changed=${this._valueChanged}
+            .hass=${this.hass}
+            .data=${r}
+            .schema=${n}
+            .computeLabel=${this._computeLabelCallback}
+            @value-changed=${this._valueChanged}
           ></ha-form>
           <domain-items-editor
             .hass=${this.hass}
             .customization_domain=${this._config.customization_domain}
             .SelectOptions=${this.toggleSelectOptions}
             @edit-item=${this._edit_itemDomain}
-            @config-changed=${this._customizationChangedDomain}>
+            @config-changed=${this._customizationChangedDomain}
+          >
           </domain-items-editor>
         </div>
-      </ha-expansion-panel>      
-   
+      </ha-expansion-panel>
+
       <ha-expansion-panel outlined class="main" .name="popup">
         <div slot="header" role="heading" aria-level="3">
           <ha-svg-icon .path=${"M2,5V19H8V5H2M9,5V10H15V5H9M16,5V14H22V5H16M9,11V19H15V11H9M16,15V19H22V15H16Z"}></ha-svg-icon>
-            ${this._computeLabelCallback({name:"popup"})}
+          ${this._computeLabelCallback({name:"popup"})}
         </div>
         <div class="content">
           <ha-form
@@ -494,28 +521,28 @@
             @value-changed=${this._valueChanged}
           ></ha-form>
         </div>
-      </ha-expansion-panel>     
+      </ha-expansion-panel>
     `}};xt.styles=n`
-  :host {
-    display: block;
-  }
-  select {
-    padding: 5px;
-    font-size: 14px;
-  } 
-  ha-svg-icon {
-    color: var(--secondary-text-color);
-  }
-  .main {
-    --ha-card-border-radius: 6px;
-    border-radius: 6px;
-    margin-top: 24px;
-  }   
-  ha-svg-icon {
-    color: var(--secondary-text-color);
-  }
-  .content { 
-    padding: 12px 4px;
-  }  
-`,At([me({attribute:!1})],xt.prototype,"hass",void 0),At([pe()],xt.prototype,"_config",void 0),At([pe()],xt.prototype,"_numericDeviceClasses",void 0),At([pe()],xt.prototype,"_subElementEditorDomain",void 0),At([pe()],xt.prototype,"_subElementEditorAlert",void 0),At([pe()],xt.prototype,"_subElementEditorSensor",void 0),xt=At([he("area-card-plus-editor")],xt),console.info("%c AREA-CARD %c 0.0.1 ","color: steelblue; background: black; font-weight: bold;","color: white ; background: dimgray; font-weight: bold;"),window.customCards=window.customCards||[],window.customCards.push({type:"area-card-plus",name:"Area Card Plus",preview:!0,description:"A custom card to display area information."})})();
+    :host {
+      display: block;
+    }
+    select {
+      padding: 5px;
+      font-size: 14px;
+    }
+    ha-svg-icon {
+      color: var(--secondary-text-color);
+    }
+    .main {
+      --ha-card-border-radius: 6px;
+      border-radius: 6px;
+      margin-top: 24px;
+    }
+    ha-svg-icon {
+      color: var(--secondary-text-color);
+    }
+    .content {
+      padding: 12px 4px;
+    }
+  `,At([me({attribute:!1})],xt.prototype,"hass",void 0),At([pe()],xt.prototype,"_config",void 0),At([pe()],xt.prototype,"_numericDeviceClasses",void 0),At([pe()],xt.prototype,"_subElementEditorDomain",void 0),At([pe()],xt.prototype,"_subElementEditorAlert",void 0),At([pe()],xt.prototype,"_subElementEditorSensor",void 0),xt=At([he("area-card-plus-editor")],xt),console.info("%c AREA-CARD %c 0.0.1 ","color: steelblue; background: black; font-weight: bold;","color: white ; background: dimgray; font-weight: bold;"),window.customCards=window.customCards||[],window.customCards.push({type:"area-card-plus",name:"Area Card Plus",preview:!0,description:"A custom card to display area information."})})();
 //# sourceMappingURL=area-card-plus.js.map

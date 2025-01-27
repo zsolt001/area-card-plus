@@ -1,15 +1,9 @@
-import { LitElement, TemplateResult, html, css, CSSResult } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
-
-import { HomeAssistant } from 'custom-card-helpers';
-
-import { Settings, } from './helpers';
-
-import { CardConfig } from './editor'
-
+import { LitElement, TemplateResult, html, css, CSSResult } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { HomeAssistant } from "custom-card-helpers";
+import { Settings } from "./helpers";
+import { CardConfig } from "./editor";
 import memoizeOne from "memoize-one";
-
-
 
 interface Schema {
   name: string;
@@ -20,7 +14,7 @@ interface Schema {
   type?: string;
 }
 
-@customElement('item-editor')
+@customElement("item-editor")
 export class ItemEditor extends LitElement {
   @property({ attribute: false }) config?: Settings;
   @property({ attribute: false }) hass?: HomeAssistant;
@@ -29,20 +23,60 @@ export class ItemEditor extends LitElement {
   @state() private _config?: CardConfig;
 
   private _schemadomain = memoizeOne(() => [
-    { name: "tap_action", selector: { select: { options: [ { label: "None", value: "none" }, { label: "Toggle", value: "toggle" },{ label: "Popup", value: "popup" }] } } },
-    { name: "color", selector: { ui_color: { default_color: "state", include_state: true } } },
+    {
+      name: "tap_action",
+      selector: {
+        select: {
+          options: [
+            { label: "None", value: "none" },
+            { label: "Toggle", value: "toggle" },
+            { label: "Popup", value: "popup" },
+          ],
+        },
+      },
+    },
+    {
+      name: "color",
+      selector: { ui_color: { default_color: "state", include_state: true } },
+    },
     { name: "icon", selector: { icon: {} } },
   ]);
 
   private _schemaalert = memoizeOne(() => [
-    { name: "tap_action", selector: { select: { options: [ { label: "None", value: "none" },{ label: "Popup", value: "popup" }] } } },
-    { name: "color", selector: { ui_color: { default_color: "state", include_state: true } } },
+    {
+      name: "tap_action",
+      selector: {
+        select: {
+          options: [
+            { label: "None", value: "none" },
+            { label: "Popup", value: "popup" },
+          ],
+        },
+      },
+    },
+    {
+      name: "color",
+      selector: { ui_color: { default_color: "state", include_state: true } },
+    },
     { name: "icon", selector: { icon: {} } },
   ]);
 
   private _schemasensor = memoizeOne(() => [
-    { name: "tap_action", selector: { select: { options: [ { label: "None", value: "none" },{ label: "Popup", value: "popup" }] } } },
-    { name: "color", selector: { ui_color: { default_color: "state", include_state: true } } },
+    {
+      name: "tap_action",
+      selector: {
+        select: {
+          options: [
+            { label: "None", value: "none" },
+            { label: "Popup", value: "popup" },
+          ],
+        },
+      },
+    },
+    {
+      name: "color",
+      selector: { ui_color: { default_color: "state", include_state: true } },
+    },
   ]);
 
   protected render(): TemplateResult {
@@ -52,13 +86,13 @@ export class ItemEditor extends LitElement {
 
     let schema;
     switch (this.getSchema) {
-      case 'sensor':
+      case "sensor":
         schema = this._schemasensor();
         break;
-      case 'domain':
+      case "domain":
         schema = this._schemadomain();
         break;
-      case 'alert':
+      case "alert":
         schema = this._schemaalert();
         break;
     }
@@ -80,22 +114,38 @@ export class ItemEditor extends LitElement {
 
   private _computeLabelCallback = (schema: Schema): string => {
     switch (schema.name) {
-      case  "icon":
-        return this.hass!.localize(`ui.panel.lovelace.editor.card.generic.icon`);
+      case "icon":
+        return this.hass!.localize(
+          `ui.panel.lovelace.editor.card.generic.icon`
+        );
       case "color":
-        return this.hass!.localize(`ui.panel.lovelace.editor.card.tile.color`);   
+        return this.hass!.localize(`ui.panel.lovelace.editor.card.tile.color`);
       case "enable_popup_view":
-        return this.hass!.localize("ui.common.enable") + " " + this.hass!.localize("ui.panel.lovelace.editor.action-editor.actions.more-info");
+        return (
+          this.hass!.localize("ui.common.enable") +
+          " " +
+          this.hass!.localize(
+            "ui.panel.lovelace.editor.action-editor.actions.more-info"
+          )
+        );
       case "disable_toggle_action":
-        return this.hass!.localize("ui.common.disable") + " " + this.hass!.localize("ui.panel.lovelace.editor.card.generic.tap_action");
+        return (
+          this.hass!.localize("ui.common.disable") +
+          " " +
+          this.hass!.localize(
+            "ui.panel.lovelace.editor.card.generic.tap_action"
+          )
+        );
       case "tap_action":
-        return this.hass!.localize("ui.panel.lovelace.editor.card.generic.tap_action");  
+        return this.hass!.localize(
+          "ui.panel.lovelace.editor.card.generic.tap_action"
+        );
       default:
         return this.hass!.localize(
           `ui.panel.lovelace.editor.card.area.${schema.name}`
-        );   
-      }     
-    };
+        );
+    }
+  };
 
   private _valueChangedSchema(event: CustomEvent): void {
     if (!this.config) {
@@ -110,7 +160,7 @@ export class ItemEditor extends LitElement {
     this._config = updatedConfig;
 
     this.dispatchEvent(
-      new CustomEvent('config-changed', {
+      new CustomEvent("config-changed", {
         detail: updatedConfig,
       })
     );

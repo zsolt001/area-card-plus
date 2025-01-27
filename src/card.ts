@@ -1,13 +1,36 @@
-import { LitElement, html, css, PropertyValues, TemplateResult, nothing } from "lit";
-import { classMap } from "lit/directives/class-map.js";
+import {
+  LitElement,
+  html,
+  css,
+  PropertyValues,
+  TemplateResult,
+  nothing,
+} from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import memoizeOne from "memoize-one";
-import { HomeAssistant, LovelaceCard, LovelaceCardConfig } from "custom-card-helpers";
-import type { HassEntity, UnsubscribeFunc } from "home-assistant-js-websocket";
-import { computeDomain, navigate, applyThemesOnElement, formatNumber } from "custom-card-helpers";
 import {
-  AreaRegistryEntry, DeviceRegistryEntry, EntityRegistryEntry, subscribeAreaRegistry, subscribeDeviceRegistry, subscribeEntityRegistry,
-  subscribeOne, SubscribeMixin, isNumericState, blankBeforeUnit
+  HomeAssistant,
+  LovelaceCard,
+  LovelaceCardConfig,
+} from "custom-card-helpers";
+import type { HassEntity, UnsubscribeFunc } from "home-assistant-js-websocket";
+import {
+  computeDomain,
+  navigate,
+  applyThemesOnElement,
+  formatNumber,
+} from "custom-card-helpers";
+import {
+  AreaRegistryEntry,
+  DeviceRegistryEntry,
+  EntityRegistryEntry,
+  subscribeAreaRegistry,
+  subscribeDeviceRegistry,
+  subscribeEntityRegistry,
+  subscribeOne,
+  SubscribeMixin,
+  isNumericState,
+  blankBeforeUnit,
 } from "./helpers";
 import { mdiClose } from "@mdi/js";
 
@@ -19,7 +42,18 @@ export interface CardConfig extends LovelaceCardConfig {
 
 const UNAVAILABLE_STATES = ["unavailable", "unknown"];
 
-const STATES_OFF = ["closed", "locked", "off", "docked", "idle", "standby", "paused", "auto", "not_home", "disarmed"];
+const STATES_OFF = [
+  "closed",
+  "locked",
+  "off",
+  "docked",
+  "idle",
+  "standby",
+  "paused",
+  "auto",
+  "not_home",
+  "disarmed",
+];
 
 const SENSOR_DOMAINS = ["sensor"];
 
@@ -27,14 +61,72 @@ const ALERT_DOMAINS = ["binary_sensor"];
 
 export const CLIMATE_DOMAINS = ["climate"];
 
-export const TOGGLE_DOMAINS = ["light", "switch", "fan", "media_player", "lock", "vacuum"];
+export const TOGGLE_DOMAINS = [
+  "light",
+  "switch",
+  "fan",
+  "media_player",
+  "lock",
+  "vacuum",
+];
 
-
-export const domainOrder = [ 'alarm_control_panel', 'siren',
-  'light', 'switch', 'media_player', 'climate', 'air_quality', 'humdifier', 'vacuum', 'lawn_mower', 'cover', 'lock', 'camera',
-  'fan', 'valve', 'water_heater', 'person', 'calendar', 'remote', 'scene', 'device_tracker', 'update', 'notifications', 'binary_sensor', 'sensor', 'script', 'tags', 'select',
-  'automation', 'button', 'number', 'conversation', 'assist_satellite', 'counter', 'event', 'group', 'image', 'image_processing', 'input_boolean', 'input_datetime', 'input_number',
-  'input_select', 'input_text', 'stt', 'sun', 'text', 'date', 'datetime', 'time', 'timer', 'todo', 'tts', 'wake_word', 'weather', 'zone', 'geo_location'
+export const domainOrder = [
+  "alarm_control_panel",
+  "siren",
+  "light",
+  "switch",
+  "media_player",
+  "climate",
+  "air_quality",
+  "humdifier",
+  "vacuum",
+  "lawn_mower",
+  "cover",
+  "lock",
+  "camera",
+  "fan",
+  "valve",
+  "water_heater",
+  "person",
+  "calendar",
+  "remote",
+  "scene",
+  "device_tracker",
+  "update",
+  "notifications",
+  "binary_sensor",
+  "sensor",
+  "script",
+  "tags",
+  "select",
+  "automation",
+  "button",
+  "number",
+  "conversation",
+  "assist_satellite",
+  "counter",
+  "event",
+  "group",
+  "image",
+  "image_processing",
+  "input_boolean",
+  "input_datetime",
+  "input_number",
+  "input_select",
+  "input_text",
+  "stt",
+  "sun",
+  "text",
+  "date",
+  "datetime",
+  "time",
+  "timer",
+  "todo",
+  "tts",
+  "wake_word",
+  "weather",
+  "zone",
+  "geo_location",
 ];
 
 export const DEVICE_CLASSES = {
@@ -42,8 +134,15 @@ export const DEVICE_CLASSES = {
   binary_sensor: ["motion", "window"],
 };
 
-
-type DomainType = "light" | "switch" | "fan" | "climate" | "media_player" | "lock" | "vacuum" | "binary_sensor";
+type DomainType =
+  | "light"
+  | "switch"
+  | "fan"
+  | "climate"
+  | "media_player"
+  | "lock"
+  | "vacuum"
+  | "binary_sensor";
 
 const DOMAIN_ICONS = {
   light: { on: "mdi:lightbulb-multiple", off: "mdi:lightbulb-multiple-off" },
@@ -70,15 +169,15 @@ const DOMAIN_ICONS = {
 };
 
 @customElement("area-card-plus")
-export class AreaCardPlus extends SubscribeMixin(LitElement) implements LovelaceCard {
-
+export class AreaCardPlus
+  extends SubscribeMixin(LitElement)
+  implements LovelaceCard
+{
   static getConfigElement() {
     return document.createElement("area-card-plus-editor");
   }
 
-  public static async getStubConfig(
-    hass: HomeAssistant
-  ): Promise<CardConfig> {
+  public static async getStubConfig(hass: HomeAssistant): Promise<CardConfig> {
     const areas = await subscribeOne(hass.connection, subscribeAreaRegistry);
     return { type: "custom:area-card-plus", area: areas[0]?.area_id || "" };
   }
@@ -93,7 +192,6 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
   @state() public _showPopup: boolean = false;
 
   private _deviceClasses: { [key: string]: string[] } = DEVICE_CLASSES;
-
 
   private _entitiesByDomain = memoizeOne(
     (
@@ -113,7 +211,7 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
               : entry.device_id && devicesInArea.has(entry.device_id))
         )
         .map((entry) => entry.entity_id)
-        .filter(entity => !hiddenEntities.includes(entity));;
+        .filter((entity) => !hiddenEntities.includes(entity));
 
       const entitiesByDomain: { [domain: string]: HassEntity[] } = {};
 
@@ -136,7 +234,9 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
 
         if (
           (ALERT_DOMAINS.includes(domain) || SENSOR_DOMAINS.includes(domain)) &&
-          !deviceClasses[domain].includes(stateObj.attributes.device_class || "")
+          !deviceClasses[domain].includes(
+            stateObj.attributes.device_class || ""
+          )
         ) {
           continue;
         }
@@ -161,8 +261,7 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
       const popupDomains = this._config?.popup_domains || [];
       const hiddenEntities = this._config?.hidden_entities || [];
       const extraEntities = this._config?.extra_entities || [];
-  
-      // Erstelle eine Liste aller relevanten Entitäten (Area + Extra)
+
       const entitiesInArea = registryEntities
         .filter(
           (entry) =>
@@ -178,93 +277,90 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
             !this._config?.hide_unavailable ||
             !UNAVAILABLE_STATES.includes(states[entity]?.state)
         );
-  
-      // Initialisiere das Ergebnisobjekt
+
       const entitiesByArea: { [domain: string]: HassEntity[] } = {};
-  
-      // Füge Entitäten der entsprechenden Domain hinzu
+
       for (const entity of entitiesInArea) {
         const domain = computeDomain(entity);
-  
+
         if (popupDomains.length > 0 && !popupDomains.includes(domain)) {
           continue;
         }
-  
+
         const stateObj: HassEntity | undefined = states[entity];
         if (!stateObj) {
           continue;
         }
-  
+
         if (!(domain in entitiesByArea)) {
           entitiesByArea[domain] = [];
         }
         entitiesByArea[domain].push(stateObj);
       }
-  
-      // Stelle sicher, dass alle Domains aus extraEntities berücksichtigt werden
+
       for (const extraEntity of extraEntities) {
         const domain = computeDomain(extraEntity);
-  
+
         if (!(domain in entitiesByArea)) {
           entitiesByArea[domain] = [];
         }
-  
+
         const stateObj: HassEntity | undefined = states[extraEntity];
         if (stateObj) {
           entitiesByArea[domain].push(stateObj);
         }
       }
-  
+
       const sortOrder = popupDomains.length > 0 ? popupDomains : domainOrder;
-  
-      // Sortiere Domains und Entitäten innerhalb der Domains
+
       const sortedEntitiesByArea = Object.entries(entitiesByArea)
         .sort(([domainA], [domainB]) => {
           const indexA = sortOrder.indexOf(domainA);
           const indexB = sortOrder.indexOf(domainB);
-  
+
           const adjustedIndexA = indexA === -1 ? sortOrder.length : indexA;
           const adjustedIndexB = indexB === -1 ? sortOrder.length : indexB;
-  
+
           return adjustedIndexA - adjustedIndexB;
         })
         .reduce((acc, [domain, entities]) => {
           const sortedEntities = entities.sort((a, b) => {
             const stateA = a.state;
             const stateB = b.state;
-  
+
             const getGroup = (state: string) => {
-              if (!STATES_OFF.includes(state) && !UNAVAILABLE_STATES.includes(state)) {
-                return 0; // Aktive Geräte
-              } else if (STATES_OFF.includes(state) && !UNAVAILABLE_STATES.includes(state)) {
-                return 1; // Inaktive Geräte
+              if (
+                !STATES_OFF.includes(state) &&
+                !UNAVAILABLE_STATES.includes(state)
+              ) {
+                return 0;
+              } else if (
+                STATES_OFF.includes(state) &&
+                !UNAVAILABLE_STATES.includes(state)
+              ) {
+                return 1;
               } else {
-                return 2; // Nicht verfügbare Geräte
+                return 2;
               }
             };
-  
+
             const groupA = getGroup(stateA);
             const groupB = getGroup(stateB);
-  
+
             if (groupA !== groupB) {
               return groupA - groupB;
             }
-  
+
             return a.entity_id.localeCompare(b.entity_id);
           });
-  
+
           acc[domain] = sortedEntities;
           return acc;
         }, {} as { [domain: string]: HassEntity[] });
-  
+
       return sortedEntitiesByArea;
     }
   );
-  
-  
-  
-  
-  
 
   private _isOn(domain: string, deviceClass?: string): HassEntity | undefined {
     const entities = this._entitiesByDomain(
@@ -280,12 +376,13 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
     return (
       deviceClass
         ? entities.filter(
-          (entity) => entity.attributes.device_class === deviceClass
-        )
+            (entity) => entity.attributes.device_class === deviceClass
+          )
         : entities
     ).find(
       (entity) =>
-        !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
+        !UNAVAILABLE_STATES.includes(entity.state) &&
+        !STATES_OFF.includes(entity.state)
     );
   }
 
@@ -322,7 +419,9 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
     );
     return `${formatNumber(sum / values.length, this.hass!.locale as any, {
       maximumFractionDigits: 1,
-    })}${uom ? blankBeforeUnit(uom, this.hass!.locale as any) : ""}${uom || ""}`;
+    })}${uom ? blankBeforeUnit(uom, this.hass!.locale as any) : ""}${
+      uom || ""
+    }`;
   }
 
   private _area = memoizeOne(
@@ -335,8 +434,8 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
       new Set(
         areaId
           ? devices
-            .filter((device) => device.area_id === areaId)
-            .map((device) => device.id)
+              .filter((device) => device.area_id === areaId)
+              .map((device) => device.id)
           : []
       )
   );
@@ -376,12 +475,10 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
   }
 
   protected shouldUpdate(changedProps: PropertyValues): boolean {
-    // Prüfe, ob _config fehlt oder sich geändert hat
     if (changedProps.has("_config") || !this._config) {
       return true;
     }
-  
-    // Prüfe, ob sich relevante Eigenschaften geändert haben
+
     if (
       changedProps.has("_devicesInArea") ||
       changedProps.has("_areas") ||
@@ -389,19 +486,17 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
     ) {
       return true;
     }
-  
-    // Spezielle Prüfung für _showPopup
+
     if (changedProps.has("_showPopup")) {
-      return true; // Render auslösen, wenn sich _showPopup geändert hat
+      return true;
     }
-  
-    // Prüfe Änderungen an hass
+
     if (!changedProps.has("hass")) {
       return false;
     }
-  
+
     const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
-  
+
     if (
       !oldHass ||
       oldHass.themes !== this.hass!.themes ||
@@ -409,8 +504,7 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
     ) {
       return true;
     }
-  
-    // Prüfe, ob Geräte und Entitäten vollständig sind
+
     if (
       !this._devices ||
       !this._devicesInArea(this._config.area, this._devices) ||
@@ -418,8 +512,7 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
     ) {
       return false;
     }
-  
-    // Prüfe spezifische Änderungen an Entitäten
+
     const entities = this._entitiesByDomain(
       this._config.area,
       this._devicesInArea(this._config.area, this._devices),
@@ -427,7 +520,7 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
       this._deviceClasses,
       this.hass.states
     );
-  
+
     for (const domainEntities of Object.values(entities)) {
       for (const stateObj of domainEntities) {
         if (oldHass!.states[stateObj.entity_id] !== stateObj) {
@@ -435,10 +528,9 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
         }
       }
     }
-  
-    return false; // Kein Update erforderlich
+
+    return false;
   }
-  
 
   protected render() {
     if (
@@ -468,235 +560,300 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
       `;
     }
 
-
-/*
-          <div
-            class="container ${classMap({
-      navigate: this._config.navigation_path !== undefined && this._config.navigation_path !== "",
-    })}"
-            @click=${this._handleNavigation}>
-*/
-
-
     return html`
       <ha-card>
           <div class="icon-container">
-            <ha-icon style=${this._config?.area_icon_color ? `color: var(--${this._config.area_icon_color}-color);` : nothing} icon=${this._config.area_icon || area.icon}></ha-icon>
+            <ha-icon style=${
+              this._config?.area_icon_color
+                ? `color: var(--${this._config.area_icon_color}-color);`
+                : nothing
+            } icon=${this._config.area_icon || area.icon}></ha-icon>
           </div>
-<div class="container" @click="${() => this._handleClick()}">
+          <div class="container" @click="${() => this._handleClick()}">
 
           <div class="right">
 
           <div class="alerts">
             ${ALERT_DOMAINS.map((domain) => {
-      if (!(domain in entitiesByDomain)) {
-        return nothing;
-      }
+              if (!(domain in entitiesByDomain)) {
+                return nothing;
+              }
 
+              return this._deviceClasses[domain].map((deviceClass) => {
+                const activeEntities = entitiesByDomain[domain].filter(
+                  (entity) => {
+                    const entityDeviceClass =
+                      entity.attributes.device_class || "default";
+                    return (
+                      entityDeviceClass === deviceClass && entity.state === "on"
+                    );
+                  }
+                );
 
+                const customization = this._config?.customization_alert?.find(
+                  (item: { type: string }) => item.type === deviceClass
+                );
+                const alertColor = customization?.color;
+                const alertIcon = customization?.icon;
 
-      return this._deviceClasses[domain].map((deviceClass) => {
-        const activeEntities = entitiesByDomain[domain].filter((entity) => {
-          const entityDeviceClass = entity.attributes.device_class || "default";
-          return entityDeviceClass === deviceClass && entity.state === "on";
-        });
+                const activeCount = activeEntities.length;
 
-        const customization = this._config?.customization_alert?.find(
-          (item: { type: string }) => item.type === deviceClass
-        );
-        const alertColor = customization?.color;
-        const alertIcon = customization?.icon;
-
-        const activeCount = activeEntities.length;
-
-        return activeCount > 0
-          ? html`
-                      <div class="icon-with-count" @click=${(ev: Event) => this._toggle(ev, domain, deviceClass)}>
+                return activeCount > 0
+                  ? html`
+                      <div
+                        class="icon-with-count"
+                        @click=${(ev: Event) =>
+                          this._toggle(ev, domain, deviceClass)}
+                      >
                         <ha-state-icon
-                          class="alert" style=${alertColor ? `color: var(--${alertColor}-color);` : this._config?.alert_color ? `color: ${this._config.alert_color};` : nothing}
-                          .icon=${alertIcon ? alertIcon : this._getIcon(domain as DomainType, activeCount > 0, deviceClass)}
+                          class="alert"
+                          style=${alertColor
+                            ? `color: var(--${alertColor}-color);`
+                            : this._config?.alert_color
+                            ? `color: ${this._config.alert_color};`
+                            : nothing}
+                          .icon=${alertIcon
+                            ? alertIcon
+                            : this._getIcon(
+                                domain as DomainType,
+                                activeCount > 0,
+                                deviceClass
+                              )}
                         ></ha-state-icon>
-                        <span class="active-count  text-small${activeCount > 0 ? "on" : "off"}">${activeCount}</span>
+                        <span
+                          class="active-count  text-small${activeCount > 0
+                            ? "on"
+                            : "off"}"
+                          >${activeCount}</span
+                        >
                       </div>
                     `
-          : nothing;
-      });
-    })}
+                  : nothing;
+              });
+            })}
           </div>          
 
           <div class="buttons">
-            ${this._config.show_active
-              ? this._config.toggle_domains?.map((domain: string) => {
-                if (!(domain in entitiesByDomain)) {
-                  return nothing;
-                }
+            ${
+              this._config.show_active
+                ? this._config.toggle_domains?.map((domain: string) => {
+                    if (!(domain in entitiesByDomain)) {
+                      return nothing;
+                    }
 
-                if (domain === "climate") {
-                  return nothing;
-                }
+                    if (domain === "climate") {
+                      return nothing;
+                    }
 
-                const customization = this._config?.customization_domain?.find(
-                  (item: { type: string }) => item.type === domain
-                );
-                const domainColor = customization?.color;
-                const domainIcon = customization?.icon;
+                    const customization =
+                      this._config?.customization_domain?.find(
+                        (item: { type: string }) => item.type === domain
+                      );
+                    const domainColor = customization?.color;
+                    const domainIcon = customization?.icon;
 
-                const activeEntities = entitiesByDomain[domain].filter(
-                  (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
-                );
-                const activeCount = activeEntities.length;
+                    const activeEntities = entitiesByDomain[domain].filter(
+                      (entity) =>
+                        !UNAVAILABLE_STATES.includes(entity.state) &&
+                        !STATES_OFF.includes(entity.state)
+                    );
+                    const activeCount = activeEntities.length;
 
-                if (activeCount > 0) {
-                  return html`
-                    <div
-                      class="icon-with-count hover"
-                      @click=${(ev: Event) => this._toggle(ev, domain)}
+                    if (activeCount > 0) {
+                      return html`
+                        <div
+                          class="icon-with-count hover"
+                          @click=${(ev: Event) => this._toggle(ev, domain)}
+                        >
+                          <ha-state-icon
+                            style=${domainColor
+                              ? `color: var(--${domainColor}-color);`
+                              : this._config?.domain_color
+                              ? `color: ${this._config.domain_color};`
+                              : nothing}
+                            class=${activeCount > 0
+                              ? "toggle-on"
+                              : "toggle-off"}
+                            .domain=${domain}
+                            .icon=${domainIcon
+                              ? domainIcon
+                              : this._getIcon(
+                                  domain as DomainType,
+                                  activeCount > 0
+                                )}
+                          ></ha-state-icon>
+                          <span
+                            class="active-count text-small ${activeCount > 0
+                              ? "on"
+                              : "off"}"
+                          >
+                            ${activeCount}
+                          </span>
+                        </div>
+                      `;
+                    } else {
+                      return nothing;
+                    }
+                  })
+                : this._config.toggle_domains?.map((domain: string) => {
+                    if (!(domain in entitiesByDomain)) {
+                      return nothing;
+                    }
 
-                    >
-                      <ha-state-icon
-                        style=${domainColor
-                          ? `color: var(--${domainColor}-color);`
-                          : this._config?.domain_color
+                    if (domain === "climate") {
+                      return nothing;
+                    }
+
+                    const customization =
+                      this._config?.customization_domain?.find(
+                        (item: { type: string }) => item.type === domain
+                      );
+                    const domainColor = customization?.color;
+                    const domainIcon = customization?.icon;
+
+                    const activeEntities = entitiesByDomain[domain].filter(
+                      (entity) =>
+                        !UNAVAILABLE_STATES.includes(entity.state) &&
+                        !STATES_OFF.includes(entity.state)
+                    );
+                    const activeCount = activeEntities.length;
+
+                    return html`
+                      <div
+                        class="icon-with-count hover"
+                        @click=${(ev: Event) => this._toggle(ev, domain)}
+                      >
+                        <ha-state-icon
+                          style=${domainColor
+                            ? `color: var(--${domainColor}-color);`
+                            : this._config?.domain_color
                             ? `color: ${this._config.domain_color};`
                             : nothing}
-                        class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
-                        .domain=${domain}
-                        .icon=${domainIcon ? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
-                      ></ha-state-icon>
-                      <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">
-                        ${activeCount}
-                      </span>
-                    </div>
-                  `;
-                } else {
-                  return nothing;
-                }
-              })
-              : this._config.toggle_domains?.map((domain: string) => {
-                if (!(domain in entitiesByDomain)) {
-                  return nothing;
-                }
-
-                if (domain === "climate") {
-                  return nothing;
-                }
-
-                const customization = this._config?.customization_domain?.find(
-                  (item: { type: string }) => item.type === domain
-                );
-                const domainColor = customization?.color;
-                const domainIcon = customization?.icon;
-
-                const activeEntities = entitiesByDomain[domain].filter(
-                  (entity) => !UNAVAILABLE_STATES.includes(entity.state) && !STATES_OFF.includes(entity.state)
-                );
-                const activeCount = activeEntities.length;
-
-                return html`
-                  <div
-                    class="icon-with-count hover"
-                    @click=${(ev: Event) => this._toggle(ev, domain)}
-                  >
-                    <ha-state-icon
-                      style=${domainColor
-                        ? `color: var(--${domainColor}-color);`
-                        : this._config?.domain_color
-                          ? `color: ${this._config.domain_color};`
-                          : nothing}
-                      class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
-                      .domain=${domain}
-                      .icon=${domainIcon ? domainIcon : this._getIcon(domain as DomainType, activeCount > 0)}
-                    ></ha-state-icon>
-                    <span class="active-count text-small ${activeCount > 0 ? "on" : "off"}">
-                      ${activeCount}
-                    </span>
-                  </div>
-                `;
-              })}
+                          class=${activeCount > 0 ? "toggle-on" : "toggle-off"}
+                          .domain=${domain}
+                          .icon=${domainIcon
+                            ? domainIcon
+                            : this._getIcon(
+                                domain as DomainType,
+                                activeCount > 0
+                              )}
+                        ></ha-state-icon>
+                        <span
+                          class="active-count text-small ${activeCount > 0
+                            ? "on"
+                            : "off"}"
+                        >
+                          ${activeCount}
+                        </span>
+                      </div>
+                    `;
+                  })
+            }
           </div>
 
           </div>
           <div class="bottom">
             <div>
-              <div style=${this._config?.area_name_color ? `color: var(--${this._config.area_name_color}-color);` : nothing} class="name text-large on">${this._config.area_name || area.name}</div>
+              <div style=${
+                this._config?.area_name_color
+                  ? `color: var(--${this._config.area_name_color}-color);`
+                  : nothing
+              } class="name text-large on">${
+      this._config.area_name || area.name
+    }</div>
               <div class="sensors">
                 ${SENSOR_DOMAINS.map((domain) => {
-        if (!(domain in entitiesByDomain)) {
-          return nothing;
-        }
+                  if (!(domain in entitiesByDomain)) {
+                    return nothing;
+                  }
 
-        const sensorElements = this._deviceClasses[domain]
-          .map((deviceClass, index, array) => {
-            const matchingEntities = entitiesByDomain[domain].filter(
-              (entity) => entity.attributes.device_class === deviceClass
-            );
+                  const sensorElements = this._deviceClasses[domain]
+                    .map((deviceClass, index, array) => {
+                      const matchingEntities = entitiesByDomain[domain].filter(
+                        (entity) =>
+                          entity.attributes.device_class === deviceClass
+                      );
 
-            if (matchingEntities.length === 0) {
-              return nothing;
-            }
+                      if (matchingEntities.length === 0) {
+                        return nothing;
+                      }
 
-            const average = this._average(domain, deviceClass);
+                      const average = this._average(domain, deviceClass);
 
-            const customization = this._config?.customization_sensor?.find(
-              (item: { type: string }) => item.type === deviceClass
-            );
-            const sensorColor = customization?.color || this._config?.sensor_color;
+                      const customization =
+                        this._config?.customization_sensor?.find(
+                          (item: { type: string }) => item.type === deviceClass
+                        );
+                      const sensorColor =
+                        customization?.color || this._config?.sensor_color;
 
-            return html`
+                      return html`
                         <span
-                          class="sensor-value" @click=${(ev: Event) => this._toggle(ev, domain, deviceClass)}
-                          style=${sensorColor ? `color: var(--${sensorColor}-color);` : nothing}
+                          class="sensor-value"
+                          @click=${(ev: Event) =>
+                            this._toggle(ev, domain, deviceClass)}
+                          style=${sensorColor
+                            ? `color: var(--${sensorColor}-color);`
+                            : nothing}
                         >
                           ${index > 0 ? " - " : ""}${average}
                         </span>
                       `;
-          })
-          .filter((element) => element !== nothing);
+                    })
+                    .filter((element) => element !== nothing);
 
-        if (sensorElements.length === 0) {
-          return nothing;
-        }
+                  if (sensorElements.length === 0) {
+                    return nothing;
+                  }
 
-        return html`
-                    <div class="sensor text-medium off">
-                      ${sensorElements}
-                    </div>
+                  return html`
+                    <div class="sensor text-medium off">${sensorElements}</div>
                   `;
-      })}
+                })}
               </div>
             </div>
             <div class="climate text-small off" >
-            ${this._config?.toggle_domains?.includes("climate") ? CLIMATE_DOMAINS.map((domain) => {
-              if (!(domain in entitiesByDomain)) {
-                return "";
-              }
-            
-              const entities = entitiesByDomain[domain];
-              const activeTemperatures = entities
-                .filter((entity) => {
-                  const hvacAction = entity.attributes.hvac_action;
-                  const isActive =
-                    !UNAVAILABLE_STATES.includes(entity.state) &&
-                    !STATES_OFF.includes(entity.state);
-                  const isHeatingCooling = hvacAction && (hvacAction !== "idle" || hvacAction === "off");
-            
-                  return isActive || isHeatingCooling;
-                })
-                .map((entity) => {
-                  const temperature = entity.attributes.temperature || "N/A";
-                  return `${temperature}°C`;
-                });
-            
-              if (activeTemperatures.length === 0) {
-                return "";
-              }
-            
-              return html`
-                <div class="climate" @click=${(ev: Event) => this._toggle(ev, domain)}>
-                  (${activeTemperatures.join(", ")})
-                </div>
-              `;
-            }) : ""}
+            ${
+              this._config?.toggle_domains?.includes("climate")
+                ? CLIMATE_DOMAINS.map((domain) => {
+                    if (!(domain in entitiesByDomain)) {
+                      return "";
+                    }
+
+                    const entities = entitiesByDomain[domain];
+                    const activeTemperatures = entities
+                      .filter((entity) => {
+                        const hvacAction = entity.attributes.hvac_action;
+                        const isActive =
+                          !UNAVAILABLE_STATES.includes(entity.state) &&
+                          !STATES_OFF.includes(entity.state);
+                        const isHeatingCooling =
+                          hvacAction &&
+                          (hvacAction !== "idle" || hvacAction === "off");
+
+                        return isActive || isHeatingCooling;
+                      })
+                      .map((entity) => {
+                        const temperature =
+                          entity.attributes.temperature || "N/A";
+                        return `${temperature}°C`;
+                      });
+
+                    if (activeTemperatures.length === 0) {
+                      return "";
+                    }
+
+                    return html`
+                      <div
+                        class="climate"
+                        @click=${(ev: Event) => this._toggle(ev, domain)}
+                      >
+                        (${activeTemperatures.join(", ")})
+                      </div>
+                    `;
+                  })
+                : ""
+            }
             
             </div>
           </div>
@@ -740,22 +897,22 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
 
   private _toggle(ev: Event, domain: string, deviceClass?: string): void {
     ev.stopPropagation();
-  
+
     const customization_domain = this._config?.customization_domain?.find(
       (item: { type: string }) => item.type === domain
     );
     const toggle_action_domain = customization_domain?.tap_action;
-  
+
     const customization_alert = this._config?.customization_alert?.find(
       (item: { type: string }) => item.type === deviceClass
     );
     const toggle_action_alert = customization_alert?.tap_action;
-  
+
     const customization_sensor = this._config?.customization_sensor?.find(
       (item: { type: string }) => item.type === deviceClass
     );
     const toggle_action_sensor = customization_sensor?.tap_action;
-  
+
     if (toggle_action_domain === "toggle") {
       if (domain === "media_player") {
         this.hass.callService(
@@ -786,24 +943,24 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
           { area_id: this._config!.area }
         );
       }
-    }
-
-    else if (toggle_action_domain === "popup" || toggle_action_domain === undefined) {
-      // Wenn die Domain nicht 'binary_sensor' oder 'sensor' ist, führe das Popup aus
-      if (domain !== "binary_sensor" && domain !== "sensor" && domain !== "climate") {
+    } else if (
+      toggle_action_domain === "popup" ||
+      toggle_action_domain === undefined
+    ) {
+      if (
+        domain !== "binary_sensor" &&
+        domain !== "sensor" &&
+        domain !== "climate"
+      ) {
         this._showPopupForDomain(domain);
       }
-      // Falls die Domain 'climate' ist und toggle_action_domain 'popup' ist
       if (domain === "climate" && toggle_action_domain === "popup") {
         this._showPopupForDomain(domain);
       }
     } else if (toggle_action_domain === "none") {
-      return; // Nichts tun, wenn 'none' eingestellt ist
+      return;
     }
-    
-    
-    
-  
+
     if (toggle_action_alert === "popup" || toggle_action_alert === undefined) {
       if (domain === "binary_sensor") {
         this._showPopupForDomain(domain, deviceClass);
@@ -811,35 +968,42 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
     } else if (toggle_action_alert === "none") {
       return;
     }
-  
-    if (toggle_action_sensor === "popup" ) {
+
+    if (toggle_action_sensor === "popup") {
       if (domain === "sensor") {
         this._showPopupForDomain(domain, deviceClass);
       }
-    } else if (toggle_action_sensor === "none" || toggle_action_sensor === undefined) {
+    } else if (
+      toggle_action_sensor === "none" ||
+      toggle_action_sensor === undefined
+    ) {
       return;
     }
   }
-  
-  
-  
-  
+
   private _showPopupForDomain(domain: string, deviceClass?: string): void {
     this._selectedDomain = domain;
-    this._selectedDeviceClass = deviceClass;  // Speichern der ausgewählten Domain
-    this._showPopup = true;          // Popup anzeigen
-  
-    // Warte darauf, dass das Update abgeschlossen ist, bevor das Popup gerendert wird
+    this._selectedDeviceClass = deviceClass;
+    this._showPopup = true;
+
     this.updateComplete.then(() => {
-      this.requestUpdate();          // Trigger das Update der Ansicht
+      this.requestUpdate();
     });
   }
 
-  private _getIcon(domain: DomainType, on: boolean, deviceClass?: string): string {
+  private _getIcon(
+    domain: DomainType,
+    on: boolean,
+    deviceClass?: string
+  ): string {
     if (domain in DOMAIN_ICONS) {
       const icons = DOMAIN_ICONS[domain];
 
-      if (deviceClass && typeof icons === "object" && !(icons as { on: string; off: string }).on) {
+      if (
+        deviceClass &&
+        typeof icons === "object" &&
+        !(icons as { on: string; off: string }).on
+      ) {
         const deviceClassIcons = icons as Record<string, string>;
         if (deviceClass in deviceClassIcons) {
           return deviceClassIcons[deviceClass];
@@ -856,21 +1020,24 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
 
   private _getDomainName(domain: string, deviceClass?: string): string {
     if (domain === "scene") {
-      return "Scene"; // Gibt "Scene" aus, wenn die Domain "scene" ist
+      return "Scene";
     }
-    
-    // Wenn domain 'binary_sensor' oder 'sensor' ist, gib den deviceClass aus
+
     if (domain === "binary_sensor" || domain === "sensor") {
-      return deviceClass ? this.hass!.localize(`component.${domain}.entity_component.${deviceClass}.name`) :  this.hass!.localize(`component.${domain}.entity_component._.name`);
+      return deviceClass
+        ? this.hass!.localize(
+            `component.${domain}.entity_component.${deviceClass}.name`
+          )
+        : this.hass!.localize(`component.${domain}.entity_component._.name`);
     }
-  
-    // Für alle anderen Domains
+
     return this.hass!.localize(`component.${domain}.entity_component._.name`);
   }
-  
 
-  createCard(cardConfig: { type: string, entity: string, [key: string]: any }) {
-    const cardElement = document.createElement(`hui-${cardConfig.type}-card`) as LovelaceCard;
+  createCard(cardConfig: { type: string; entity: string; [key: string]: any }) {
+    const cardElement = document.createElement(
+      `hui-${cardConfig.type}-card`
+    ) as LovelaceCard;
     if (cardElement) {
       cardElement.hass = this.hass;
       cardElement.setConfig(cardConfig);
@@ -886,10 +1053,10 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
       this._showPopup = true;
       this._selectedDomain = undefined;
       this._selectedDeviceClass = undefined;
-        this.requestUpdate();
+      this.requestUpdate();
     }
   }
-  
+
   private _closeDialog(): void {
     this._showPopup = false;
   }
@@ -901,22 +1068,24 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
       this._entities!,
       this.hass.states
     );
-  
+
     const area = this._area(this._config!.area, this._areas!);
     let columns = this._config?.columns ? this._config.columns : 4;
-  
-    // Berechnung der Entitäten nach ausgewähltem DeviceClass und Domain
-    const entitiesToRender: Record<string, HassEntity[]> = this._selectedDeviceClass
+
+    const entitiesToRender: Record<string, HassEntity[]> = this
+      ._selectedDeviceClass
       ? {
-          [this._selectedDomain]: (entitiesByArea[this._selectedDomain] || []).filter(
-            (entity) => entity.attributes.device_class === this._selectedDeviceClass
-          )
+          [this._selectedDomain]: (
+            entitiesByArea[this._selectedDomain] || []
+          ).filter(
+            (entity) =>
+              entity.attributes.device_class === this._selectedDeviceClass
+          ),
         }
       : this._selectedDomain
       ? { [this._selectedDomain]: entitiesByArea[this._selectedDomain] || [] }
       : entitiesByArea;
-  
-    // Berechnung der maximalen Anzahl der Entitäten über alle Domains
+
     let maxEntityCount = 0;
     Object.entries(entitiesToRender).forEach(([domain, entities]) => {
       const entityCount = entities.length;
@@ -924,19 +1093,21 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
         maxEntityCount = entityCount;
       }
     });
-  
-    // Anpassung der Spaltenanzahl je nach max. Anzahl der Entitäten
+
     if (maxEntityCount === 1) columns = 1;
     else if (maxEntityCount === 2) columns = Math.min(columns, 2);
     else if (maxEntityCount === 3) columns = Math.min(columns, 3);
     else columns = Math.min(columns, 4);
-  
-    // Setzen der Anzahl der Spalten als CSS-Variable
-    this.style.setProperty('--columns', columns.toString());
-  
-    // Rendering der Popup-Dialoge
+
+    this.style.setProperty("--columns", columns.toString());
+
     return html`
-      <ha-dialog id="more-info-dialog" style="--columns: ${columns};" open @closed="${this._closeDialog}">
+      <ha-dialog
+        id="more-info-dialog"
+        style="--columns: ${columns};"
+        open
+        @closed="${this._closeDialog}"
+      >
         <div class="dialog-header">
           <ha-icon-button
             slot="navigationIcon"
@@ -948,44 +1119,104 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
             <h3>${this._config?.area_name || area?.name}</h3>
           </div>
         </div>
-  
+
         <div class="tile-container">
-          ${Object.entries(entitiesToRender).map(([domain, entities]) => html`
-            <div class="domain-group">
-              <h4>
-                ${domain === "binary_sensor" || domain === "sensor"
-                  ? this._getDomainName(domain, this._selectedDeviceClass) // Zeigt deviceClass für binary_sensor und sensor
-                  : this._getDomainName(domain) // Ansonsten nur die Domain
-                }
-              </h4>
-              <div class="domain-entities">
-                ${entities.map((entity: HassEntity) => html`
-                  <div class="entity-card">
-                    ${this.createCard({
-                      type: "tile",
-                      entity: entity.entity_id,
-                      ...(domain === "alarm_control_panel" && { features: [{ type: "alarm-modes", modes: ["armed_home", "armed_away", "armed_night", "armed_vacation", "armed_custom_bypass", "disarmed"] }] }), 
-                      ...(domain === "light" && { features: [{ type: "light-brightness" }] }),
-                      ...(domain === "cover" && { features: [{ type: "cover-open-close" }, { type: "cover-position" }] }),
-                      ...(domain === "vacuum" && { features: [{ type: "vacuum-commands", commands: ["start_pause", "stop", "clean_spot", "locate", "return_home"]}] }),  
-                      ...(domain === "climate" && { features: [{ type: "climate-hvac-modes", hvac_modes: ["auto", "heat_cool", "heat", "cool", "dry", "fan_only", "off"]}] }), 
-                      ...(domain === "media_player" && { features: [{ type: "media-player-volume-slider" }] }), 
-                      ...(domain === "lock" && { features: [{ type: "lock-commands" }] }), 
-                      ...(domain === "fan" && { features: [{ type: "fan-speed" }] }), 
-                      ...(domain === "update" && { features: [{ type: "update-actions", backup: "ask" }] }), 
-                    })}
-                  </div>
-                `)}
+          ${Object.entries(entitiesToRender).map(
+            ([domain, entities]) => html`
+              <div class="domain-group">
+                <h4>
+                  ${domain === "binary_sensor" || domain === "sensor"
+                    ? this._getDomainName(domain, this._selectedDeviceClass)
+                    : this._getDomainName(domain)}
+                </h4>
+                <div class="domain-entities">
+                  ${entities.map(
+                    (entity: HassEntity) => html`
+                      <div class="entity-card">
+                        ${this.createCard({
+                          type: "tile",
+                          entity: entity.entity_id,
+                          ...(domain === "alarm_control_panel" && {
+                            features: [
+                              {
+                                type: "alarm-modes",
+                                modes: [
+                                  "armed_home",
+                                  "armed_away",
+                                  "armed_night",
+                                  "armed_vacation",
+                                  "armed_custom_bypass",
+                                  "disarmed",
+                                ],
+                              },
+                            ],
+                          }),
+                          ...(domain === "light" && {
+                            features: [{ type: "light-brightness" }],
+                          }),
+                          ...(domain === "cover" && {
+                            features: [
+                              { type: "cover-open-close" },
+                              { type: "cover-position" },
+                            ],
+                          }),
+                          ...(domain === "vacuum" && {
+                            features: [
+                              {
+                                type: "vacuum-commands",
+                                commands: [
+                                  "start_pause",
+                                  "stop",
+                                  "clean_spot",
+                                  "locate",
+                                  "return_home",
+                                ],
+                              },
+                            ],
+                          }),
+                          ...(domain === "climate" && {
+                            features: [
+                              {
+                                type: "climate-hvac-modes",
+                                hvac_modes: [
+                                  "auto",
+                                  "heat_cool",
+                                  "heat",
+                                  "cool",
+                                  "dry",
+                                  "fan_only",
+                                  "off",
+                                ],
+                              },
+                            ],
+                          }),
+                          ...(domain === "media_player" && {
+                            features: [{ type: "media-player-volume-slider" }],
+                          }),
+                          ...(domain === "lock" && {
+                            features: [{ type: "lock-commands" }],
+                          }),
+                          ...(domain === "fan" && {
+                            features: [{ type: "fan-speed" }],
+                          }),
+                          ...(domain === "update" && {
+                            features: [
+                              { type: "update-actions", backup: "ask" },
+                            ],
+                          }),
+                        })}
+                      </div>
+                    `
+                  )}
+                </div>
               </div>
-            </div>
-          `)}
+            `
+          )}
         </div>
       </ha-dialog>
     `;
   }
-  
-  
-    
+
   static get styles() {
     return css`
       ha-card {
@@ -1151,8 +1382,4 @@ export class AreaCardPlus extends SubscribeMixin(LitElement) implements Lovelace
 
     `;
   }
-
-
-
-
 }
