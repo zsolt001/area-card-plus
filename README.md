@@ -22,7 +22,7 @@ To make sure this card will work like it should please check if your relevant en
 
 - based on default HA area card with more features and customization
 - shows toggle domains (the ones on the right) which can be toggled to on/off
-- shows alert entities (motion, door, windo) next to toggle domains
+- shows alert entities (motion, door, window) next to toggle domains
 - shows sensor entities (temperatur, humidity etc.) under the area icon
 - shows climate entities under the sensor entities
 
