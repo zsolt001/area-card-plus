@@ -7,6 +7,7 @@ import {
   nothing,
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
 import memoizeOne from "memoize-one";
 import {
   HomeAssistant,
@@ -19,6 +20,7 @@ import {
   navigate,
   applyThemesOnElement,
   formatNumber,
+  LovelaceConfig,
 } from "custom-card-helpers";
 import {
   AreaRegistryEntry,
@@ -189,7 +191,7 @@ export class AreaCardPlus
   @state() private _areas?: AreaRegistryEntry[];
   @state() private _devices?: DeviceRegistryEntry[];
   @state() private _entities?: EntityRegistryEntry[];
-  @state() public _showPopup: boolean = false;
+  @state() private _showPopup: boolean = false;
 
   private _deviceClasses: { [key: string]: string[] } = DEVICE_CLASSES;
 
@@ -552,6 +554,10 @@ export class AreaCardPlus
     );
     const area = this._area(this._config.area, this._areas);
 
+    const classes = {
+      mirrored: this._config.mirrored === true,
+    };
+
     if (area === null) {
       return html`
         <hui-warning>
@@ -561,7 +567,7 @@ export class AreaCardPlus
     }
 
     return html`
-      <ha-card>
+      <ha-card class="${classMap(classes)}">
           <div class="icon-container">
             <ha-icon style=${
               this._config?.area_icon_color
@@ -870,9 +876,11 @@ export class AreaCardPlus
 
   protected updated(changedProps: PropertyValues): void {
     super.updated(changedProps);
+
     if (!this._config || !this.hass) {
       return;
     }
+
     const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
     const oldConfig = changedProps.get("_config") as CardConfig | undefined;
 
@@ -883,9 +891,6 @@ export class AreaCardPlus
         (!oldConfig || oldConfig.theme !== this._config.theme))
     ) {
       applyThemesOnElement(this, this.hass.themes, this._config.theme);
-    }
-    if (changedProps.has("_showPopup") && this._showPopup) {
-      this.renderPopup();
     }
   }
 
@@ -1046,7 +1051,7 @@ export class AreaCardPlus
     return html`<p>Invalid Configuration for card type: ${cardConfig.type}</p>`;
   }
 
-  public _handleClick(): void {
+  private _handleClick(): void {
     if (this._config?.navigation_path) {
       this._handleNavigation();
     } else {
@@ -1061,7 +1066,7 @@ export class AreaCardPlus
     this._showPopup = false;
   }
 
-  public renderPopup(): TemplateResult {
+  private renderPopup(): TemplateResult {
     const entitiesByArea = this._entitiesByArea(
       this._config!.area,
       this._devicesInArea(this._config!.area, this._devices!),
@@ -1237,6 +1242,10 @@ export class AreaCardPlus
         font-size: 64px; 
         color: var(--primary-color);
       }
+      .mirrored .icon-container {
+        left: unset;
+        right: 16px;
+      }
       .icon-container ha-icon {
         --mdc-icon-size: 60px;
         color: var(--sidebar-selected-icon-color);
@@ -1262,6 +1271,11 @@ export class AreaCardPlus
         right: 8px;
         gap: 7px; 
       }
+      .mirrored .right {
+        right: unset;
+        left: 8px;
+        flex-direction: row-reverse;
+      }
       .alerts {
         display: flex;
         flex-direction: column;
@@ -1282,6 +1296,12 @@ export class AreaCardPlus
         bottom: 8px;
         left: 16px;
       }
+      .mirrored .bottom {
+        left: unset;
+        right: 16px;
+        text-align: end;
+        align-items: end;
+      }        
       .name {
         font-weight: bold;
         margin-bottom: 8px;
@@ -1344,6 +1364,7 @@ export class AreaCardPlus
         display: flex;
         flex-direction: column; 
         gap: 8px; 
+        margin-top: 8px;
       }
 
       .domain-group h4 {
@@ -1360,7 +1381,6 @@ export class AreaCardPlus
       .entity-card {
         width: 22.5vw;
       }
-
       @media (max-width: 768px) {
         ha-dialog#more-info-dialog {
           --columns: 1; 

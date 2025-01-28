@@ -14,6 +14,7 @@ import {
   SubElementConfig,
   Settings,
   fireEvent,
+  EntityRegistryEntry
 } from "./helpers";
 import {
   DEVICE_CLASSES,
@@ -29,6 +30,7 @@ import {
 } from "@mdi/js";
 import "./items-editor";
 import "./item-editor";
+
 
 export interface CardConfig extends LovelaceCardConfig {
   area: string;
@@ -46,6 +48,7 @@ interface Schema {
   selector?: any;
   required?: boolean;
 
+
   default?: any;
   type?: string;
 }
@@ -54,6 +57,9 @@ interface SubElementEditor {
   index?: number;
 }
 
+
+
+
 @customElement("area-card-plus-editor")
 export class AreaCardPlusEditor
   extends LitElement
@@ -61,6 +67,7 @@ export class AreaCardPlusEditor
 {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: CardConfig;
+  @state() public _entities?: EntityRegistryEntry[];
   @state() private _numericDeviceClasses?: string[];
   @state() private _subElementEditorDomain: SubElementConfig | undefined =
     undefined;
@@ -68,6 +75,9 @@ export class AreaCardPlusEditor
     undefined;
   @state() private _subElementEditorSensor: SubElementConfig | undefined =
     undefined;
+
+
+    
 
   private _schema = memoizeOne(() => [
     { name: "area", selector: { area: {} } },
@@ -103,6 +113,7 @@ export class AreaCardPlusEditor
             ui_color: { default_color: "state", include_state: true },
           },
         },
+        { name: "mirrored", selector: { boolean: { } } },
       ],
     },
   ]);
@@ -162,7 +173,8 @@ export class AreaCardPlusEditor
     { name: "show_active", selector: { boolean: {} } },
   ]);
 
-  private _popupschema = memoizeOne((allDomains: SelectOption[]) => [
+
+  private _popupschema = memoizeOne((allDomains: SelectOption[], allEntities: SelectOption	[]) => [
     { name: "columns", selector: { number: { min: 1, max: 4, mode: "box" } } },
     {
       name: "popup_domains",
@@ -175,8 +187,33 @@ export class AreaCardPlusEditor
         },
       },
     },
-    { name: "hidden_entities", selector: { entity: { multiple: true } } },
-    { name: "extra_entities", selector: { entity: { multiple: true } } },
+    {
+      name: "hidden_entities",
+      flatten: true,
+      type: "expandable",
+      icon: "mdi:eye-off",
+      schema: [
+        {
+          name: "hidden_entities",
+          selector: {
+            select: {
+              reorder: true,
+              multiple: true,
+              options: allEntities,
+            },
+          },
+        },  
+      ],
+    },
+    {
+      name: "extra_entities",
+      flatten: true,
+      type: "expandable",
+      icon: "mdi:eye-plus",
+      schema: [
+        { name: "extra_entities", selector: { entity: { multiple: true } } },
+      ],
+    },
     { name: "hide_unavailable", selector: { boolean: {} } },
   ]);
 
@@ -214,13 +251,15 @@ export class AreaCardPlusEditor
     this._classesForArea(area, "all")
   );
 
+
+
   private _classesForArea(
     area: string,
-    domain: "sensor" | "binary_sensor" | "toggle" | "all",
+    domain: "sensor" | "binary_sensor" | "toggle" | "all" , 
     numericDeviceClasses?: string[] | undefined
   ): string[] {
     let entities;
-
+  
     if (domain === "toggle") {
       entities = Object.values(this.hass!.entities).filter(
         (e) =>
@@ -230,24 +269,24 @@ export class AreaCardPlusEditor
           (e.area_id === area ||
             (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
       );
-
+  
       return [...new Set(entities.map((e) => computeDomain(e.entity_id)))];
     } else if (domain === "all") {
       const extraEntities = this._config?.extra_entities || [];
-
+  
       let entities = Object.values(this.hass!.entities).filter(
         (e) =>
           !e.hidden &&
           (e.area_id === area ||
             (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
       );
-
+  
       const extraEntityObjects = extraEntities
         .map((entityId: string) => this.hass!.states[entityId])
         .filter((stateObj: string) => stateObj !== undefined);
-
+  
       entities = [...entities, ...extraEntityObjects];
-
+  
       return [...new Set(entities.map((e) => computeDomain(e.entity_id)))];
     } else {
       entities = Object.values(this.hass!.entities).filter(
@@ -258,7 +297,7 @@ export class AreaCardPlusEditor
           (e.area_id === area ||
             (e.device_id && this.hass!.devices[e.device_id]?.area_id === area))
       );
-
+  
       const classes = entities
         .map(
           (e) => this.hass!.states[e.entity_id]?.attributes.device_class || ""
@@ -270,7 +309,7 @@ export class AreaCardPlusEditor
               !numericDeviceClasses ||
               numericDeviceClasses.includes(c))
         );
-
+  
       return [...new Set(classes)];
     }
   }
@@ -294,6 +333,7 @@ export class AreaCardPlusEditor
     (possibleClasses: string[], currentClasses: string[]): SelectOption[] =>
       this._buildOptions("all", possibleClasses, currentClasses)
   );
+
 
   private _buildOptions(
     type: "sensor" | "binary_sensor" | "toggle" | "all",
@@ -327,6 +367,7 @@ export class AreaCardPlusEditor
     this._config = {
       ...config,
       columns: config.columns || 4,
+      mirrored: config.mirrored || false,
       customization_domain: config.customization_domain || [],
       customization_alert: config.customization_alert || [],
       customization_sensor: config.customization_sensor || [],
@@ -352,10 +393,19 @@ export class AreaCardPlusEditor
       const previousExtraEntities = previousConfig?.extra_entities || [];
       const currentExtraEntities = this._config.extra_entities || [];
 
+      const previousPopupDomains = previousConfig?.popup_domains || [];
+      const currentPopupDomains = this._config?.popup_domains || [];
+
       const extraEntitiesChanged =
         previousExtraEntities.length !== currentExtraEntities.length ||
         !previousExtraEntities.every((entity: string) =>
           currentExtraEntities.includes(entity)
+        );
+
+        const popupDomainsChanged =
+        previousPopupDomains.length !== currentPopupDomains.length ||
+        !previousPopupDomains.every((entity: string) =>
+          currentPopupDomains.includes(entity)
         );
 
       if (previousArea !== undefined && previousArea !== currentArea) {
@@ -385,6 +435,11 @@ export class AreaCardPlusEditor
         }
         this.requestUpdate();
       }
+
+      if (popupDomainsChanged) {
+        console.log("Popup domains changed:");
+        this._updateEntityOptions();
+      }
     }
 
     if (!this._numericDeviceClasses) {
@@ -394,6 +449,31 @@ export class AreaCardPlusEditor
     }
   }
 
+  private _entityOptions: SelectOption[] = [];
+
+  private _updateEntityOptions(): void {
+    if (!this._config || !this.hass) return;
+  
+    const currentArea = this._config.area;
+    const currentPopupDomains = this._config.popup_domains || [];
+  
+    this._entityOptions = Object.values(this.hass.entities)
+      .filter(e => 
+        !e.hidden &&
+        currentPopupDomains.includes(computeDomain(e.entity_id)) &&
+        (e.area_id === currentArea ||
+          (e.device_id && this.hass!.devices[e.device_id]?.area_id === currentArea))
+      )
+      .map(e => ({
+        value: e.entity_id,
+        label: e.entity_id
+      }))
+      .sort((a, b) => a.value.localeCompare(b.value));
+  
+    this._valueChanged({ detail: { value: this._config } } as CustomEvent);
+  }
+  
+  
   private _valueChanged(event: CustomEvent) {
     this._config = event.detail.value;
     this.dispatchEvent(
@@ -445,6 +525,8 @@ export class AreaCardPlusEditor
           " " +
           this.hass!.localize(`ui.panel.lovelace.editor.card.tile.color`)
         );
+      case "mirrored":
+        return "Mirror Card Layout";
       case "alert_color":
       case "sensor_color":
       case "domain_color":
@@ -475,7 +557,7 @@ export class AreaCardPlusEditor
             `ui.panel.lovelace.editor.card.generic.entities`
           ) +
           ":"
-        );
+        );           
       case "hidden_entities":
         return (
           this.hass!.localize(`ui.common.hide`) +
@@ -679,6 +761,7 @@ export class AreaCardPlusEditor
     );
   }
 
+  
   public get binarySelectOptions(): SelectOption[] {
     return this._buildBinaryOptions(
       this._binaryClassesForArea(this._config!.area || ""),
@@ -695,6 +778,12 @@ export class AreaCardPlusEditor
     );
   }
 
+
+  public get entityOptions(): SelectOption[] {
+    return this._entityOptions;
+  }
+  
+ 
   protected render() {
     if (!this.hass || !this._config) {
       return nothing;
@@ -714,7 +803,7 @@ export class AreaCardPlusEditor
 
     const toggleschema = this._toggleschema(this.toggleSelectOptions);
 
-    const popupschema = this._popupschema(this.AllSelectOptions);
+    const popupschema = this._popupschema(this.AllSelectOptions, this.entityOptions);
 
     const data = {
       alert_classes: DEVICE_CLASSES.binary_sensor,
