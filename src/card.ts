@@ -569,6 +569,7 @@ export class AreaCardPlus
 
     return html`
       <ha-card class="${classMap(classes)}">
+      <div class="content">
           <div class="icon-container">
             <ha-icon style=${
               this._config?.area_icon_color
@@ -878,7 +879,7 @@ export class AreaCardPlus
           return this._showPopup ? this.renderPopup() : nothing;
         })()}
         
-
+        </div>
       </ha-card>
     `;
   }
@@ -1276,14 +1277,15 @@ if (customization?.card) {
       ha-card {
         overflow: hidden;
         position: relative;
-        background-size: cover;
-        height: auto;
-        min-height: 180px;
+        height: 100%;
+      }
+      .content {
         padding: 16px;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-      }
+        justify-content: space-between;    
+        min-height: 145px;    
+      }        
       .icon-container {
         position: absolute;
         top: 16px;
@@ -1441,22 +1443,19 @@ if (customization?.card) {
           grid-template-columns: 1fr; 
         }
 
+        .content {
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;    
+          min-height: 140px;    
+        }  
+
         .entity-card {
           flex-basis: 100%; 
           width: 100%;
           overflow: hidden; 
         }
-        ha-card {
-        overflow: hidden;
-        position: relative;
-        background-size: cover;
-        height: auto;
-        min-height: 165px;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
               .name {
         font-weight: bold;
         margin-bottom: 5px;

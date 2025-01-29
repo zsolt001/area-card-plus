@@ -5,6 +5,7 @@
         </hui-warning>
       `:F`
       <ha-card class="${ye(c)}">
+      <div class="content">
           <div class="icon-container">
             <ha-icon style=${(null===(e=this._config)||void 0===e?void 0:e.area_icon_color)?`color: var(--${this._config.area_icon_color}-color);`:V} icon=${this._config.area_icon||a.icon}></ha-icon>
           </div>
@@ -103,7 +104,7 @@
         </div>
         ${(()=>this._showPopup?this.renderPopup():V)()}
         
-
+        </div>
       </ha-card>
     `}updated(e){if(super.updated(e),!this._config||!this.hass)return;const t=e.get("hass"),s=e.get("_config");(!e.has("hass")||t&&t.themes===this.hass.themes)&&(!e.has("_config")||s&&s.theme===this._config.theme)||function(e,t,s,n){void 0===n&&(n=!1),e._themes||(e._themes={});var i=t.default_theme;("default"===s||s&&t.themes[s])&&(i=s);var o=Se({},e._themes);if("default"!==i){var r=t.themes[i];Object.keys(r).forEach((function(t){var s="--"+t;e._themes[s]="",o[s]=r[t]}))}if(e.updateStyles?e.updateStyles(o):window.ShadyCSS&&window.ShadyCSS.styleSubtree(e,o),n){var a=document.querySelector("meta[name=theme-color]");if(a){a.hasAttribute("default-content")||a.setAttribute("default-content",a.getAttribute("content"));var c=o["--primary-color"]||a.getAttribute("default-content");a.setAttribute("content",c)}}}(this,this.hass.themes,this._config.theme)}_handleNavigation(){this._config.navigation_path&&function(e,t,s){void 0===s&&(s=!1),s?history.replaceState(null,"",t):history.pushState(null,"",t),xe(window,"location-changed",{replace:s})}(0,this._config.navigation_path)}_toggle(e,t,s){var n,i,o,r,a,c;e.stopPropagation();const l=null===(i=null===(n=this._config)||void 0===n?void 0:n.customization_domain)||void 0===i?void 0:i.find((e=>e.type===t)),u=null==l?void 0:l.tap_action,h=null===(r=null===(o=this._config)||void 0===o?void 0:o.customization_alert)||void 0===r?void 0:r.find((e=>e.type===s)),d=null==h?void 0:h.tap_action,f=null===(c=null===(a=this._config)||void 0===a?void 0:a.customization_sensor)||void 0===c?void 0:c.find((e=>e.type===s)),p=null==f?void 0:f.tap_action;if("toggle"===u)"media_player"===t?this.hass.callService(t,this._isOn(t)?"media_pause":"media_play",void 0,{area_id:this._config.area}):"lock"===t?this.hass.callService(t,this._isOn(t)?"lock":"unlock",void 0,{area_id:this._config.area}):"vacuum"===t?this.hass.callService(t,this._isOn(t)?"stop":"start",void 0,{area_id:this._config.area}):vi.includes(t)&&this.hass.callService(t,this._isOn(t)?"turn_off":"turn_on",void 0,{area_id:this._config.area});else if("popup"===u||void 0===u)"binary_sensor"!==t&&"sensor"!==t&&"climate"!==t&&this._showPopupForDomain(t),"climate"===t&&"popup"===u&&this._showPopupForDomain(t);else if("none"===u)return;if("popup"===d||void 0===d)"binary_sensor"===t&&this._showPopupForDomain(t,s);else if("none"===d)return;if("popup"===p)"sensor"===t&&this._showPopupForDomain(t,s);else if("none"===p||void 0===p)return}_showPopupForDomain(e,t){this._selectedDomain=e,this._selectedDeviceClass=t,this._showPopup=!0,this.updateComplete.then((()=>{this.requestUpdate()}))}_getIcon(e,t,s){if(e in wi){const n=wi[e];if(s&&"object"==typeof n&&!n.on&&s in n)return n[s];if("object"==typeof n&&"on"in n&&"off"in n)return t?n.on:n.off}return""}_getDomainName(e,t){return"scene"===e?"Scene":"binary_sensor"!==e&&"sensor"!==e||!t?this.hass.localize(`component.${e}.entity_component._.name`):this.hass.localize(`component.${e}.entity_component.${t}.name`)}createCard(e){let t;if(e.type.startsWith("custom:")){const s=e.type.replace("custom:","");t=document.createElement(s)}else t=document.createElement(`hui-${e.type}-card`);return t?(t.hass=this.hass,t.setConfig(e),t):F`<p>Invalid Configuration for card type: ${e.type}</p>`}_handleClick(){var e;(null===(e=this._config)||void 0===e?void 0:e.navigation_path)?this._handleNavigation():(this._showPopup=!0,this._selectedDomain=void 0,this._selectedDeviceClass=void 0,this.requestUpdate())}_closeDialog(){this._showPopup=!1}renderPopup(){var e,t;const s=this._entitiesByArea(this._config.area,this._devicesInArea(this._config.area,this._devices),this._entities,this.hass.states),n=this._area(this._config.area,this._areas);let i=(null===(e=this._config)||void 0===e?void 0:e.columns)?this._config.columns:4;const o=this._selectedDeviceClass?{[this._selectedDomain]:(s[this._selectedDomain]||[]).filter((e=>e.attributes.device_class===this._selectedDeviceClass))}:this._selectedDomain?{[this._selectedDomain]:s[this._selectedDomain]||[]}:s;let r=0;return Object.entries(o).forEach((([e,t])=>{const s=t.length;s>r&&(r=s)})),i=1===r?1:2===r?Math.min(i,2):3===r?Math.min(i,3):Math.min(i,4),this.style.setProperty("--columns",i.toString()),F`
       <ha-dialog
@@ -145,14 +146,15 @@
       ha-card {
         overflow: hidden;
         position: relative;
-        background-size: cover;
-        height: auto;
-        min-height: 180px;
+        height: 100%;
+      }
+      .content {
         padding: 16px;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-      }
+        justify-content: space-between;    
+        min-height: 145px;    
+      }        
       .icon-container {
         position: absolute;
         top: 16px;
@@ -310,22 +312,19 @@
           grid-template-columns: 1fr; 
         }
 
+        .content {
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;    
+          min-height: 140px;    
+        }  
+
         .entity-card {
           flex-basis: 100%; 
           width: 100%;
           overflow: hidden; 
         }
-        ha-card {
-        overflow: hidden;
-        position: relative;
-        background-size: cover;
-        height: auto;
-        min-height: 165px;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
               .name {
         font-weight: bold;
         margin-bottom: 5px;
