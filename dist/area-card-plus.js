@@ -326,10 +326,6 @@
         flex-direction: column;
         justify-content: space-between;
       }
-              .icon-container ha-icon {
-        --mdc-icon-size: 55px;
-        color: var(--sidebar-selected-icon-color);
-      } 
               .name {
         font-weight: bold;
         margin-bottom: 5px;
