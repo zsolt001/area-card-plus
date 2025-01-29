@@ -439,7 +439,6 @@ export class AreaCardPlusEditor
       }
 
       if (popupDomainsChanged) {
-        console.log("Popup domains changed:");
         this._updateEntityOptions();
       }
     }
