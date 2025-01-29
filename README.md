@@ -73,6 +73,24 @@ You can select an individual icon & color for each domain if you want
 
 ![image](https://github.com/user-attachments/assets/1348ea8b-fecf-43a7-9261-493755174ce1)
 
+### Change card in the popup view
+This feature is experimental and YAML only (for now)
+
+Add this code
+
+```yaml
+customization_popup:  
+  - type: light                           # change it to the domain you want
+    card: |-
+      type: custom:mushroom-light-card    # change card type to the card you want
+      show_brightness_control: true       # use optional card features (not everything tested)
+      show_color_control: true
+      show_color_temp_control: true
+      use_light_color: true
+```
+
+
+
 </details>
 
 
