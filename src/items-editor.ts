@@ -204,3 +204,12 @@ export class SensorItemsEditor extends BaseItemsEditor {
     return this.customization_sensor;
   }
 }
+
+@customElement("popup-items-editor")
+export class PopupItemsEditor extends BaseItemsEditor {
+  @property({ attribute: false }) customization_popup?: Settings[];
+  protected customizationChangedEvent = "config-changed";
+  protected get customization() {
+    return this.customization_popup;
+  }
+}

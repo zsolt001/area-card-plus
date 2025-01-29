@@ -75,7 +75,8 @@ export class AreaCardPlusEditor
     undefined;
   @state() private _subElementEditorSensor: SubElementConfig | undefined =
     undefined;
-
+ //   @state() private _subElementEditorPopup: SubElementConfig | undefined =
+ //   undefined;
 
     
 
@@ -371,6 +372,7 @@ export class AreaCardPlusEditor
       customization_domain: config.customization_domain || [],
       customization_alert: config.customization_alert || [],
       customization_sensor: config.customization_sensor || [],
+  //    customization_popup: config.customization_popup || [],
     };
   }
 
@@ -594,7 +596,7 @@ export class AreaCardPlusEditor
 
   private _editItem(
     ev: CustomEvent<number>,
-    editorKey: "Domain" | "Alert" | "Sensor"
+    editorKey: "Domain" | "Alert" | "Sensor" //| "Popup"
   ): void {
     ev.stopPropagation();
     if (!this._config || !this.hass) {
@@ -617,9 +619,14 @@ export class AreaCardPlusEditor
     this._editItem(ev, "Sensor");
   }
 
+  /*
+  private _edit_itemPopup(ev: CustomEvent<number>): void {
+    this._editItem(ev, "Popup");
+  }
+*/
   private _customizationChanged(
     ev: CustomEvent<Settings[]>,
-    customizationKey: "domain" | "alert" | "sensor"
+    customizationKey: "domain" | "alert" | "sensor" //| "popup"
   ): void {
     ev.stopPropagation();
     if (!this._config || !this.hass) {
@@ -645,8 +652,13 @@ export class AreaCardPlusEditor
     this._customizationChanged(ev, "sensor");
   }
 
+  /*
+  private _customizationChangedPopup(ev: CustomEvent<Settings[]>): void {
+    this._customizationChanged(ev, "popup");
+  }
+*/
   private _renderSubElementEditor(
-    editorKey: "domain" | "alert" | "sensor",
+    editorKey: "domain" | "alert" | "sensor" /*| "popup"*/,
     goBackHandler: () => void,
     itemChangedHandler: (ev: CustomEvent<Settings>) => void
   ) {
@@ -698,7 +710,15 @@ export class AreaCardPlusEditor
       this._itemChangedSensor
     );
   }
-
+/*
+  private _renderSubElementEditorPopup() {
+    return this._renderSubElementEditor(
+      "popup",
+      this._goBackPopup,
+      this._itemChangedPopup
+    );
+  }
+*/
   private _goBackDomain(): void {
     this._subElementEditorDomain = undefined;
   }
@@ -711,6 +731,10 @@ export class AreaCardPlusEditor
     this._subElementEditorSensor = undefined;
   }
 
+/*  private _goBackPopup(): void {
+    this._subElementEditorPopup = undefined;
+  }
+*/
   private _itemChanged(
     ev: CustomEvent<Settings>,
     editorTarget: { index?: number } | undefined,
@@ -718,6 +742,7 @@ export class AreaCardPlusEditor
       | "customization_domain"
       | "customization_alert"
       | "customization_sensor"
+    //  | "customization_popup"
   ): void {
     ev.stopPropagation();
     if (!this._config || !this.hass) {
@@ -745,6 +770,11 @@ export class AreaCardPlusEditor
     this._itemChanged(ev, this._subElementEditorSensor, "customization_sensor");
   }
 
+  /*
+  private _itemChangedPopup(ev: CustomEvent<Settings>): void {
+    this._itemChanged(ev, this._subElementEditorPopup, "customization_popup");
+  }
+*/
   public get toggleSelectOptions(): SelectOption[] {
     return this._buildToggleOptions(
       this._toggleDomainsForArea(this._config!.area || ""),
@@ -818,6 +848,7 @@ export class AreaCardPlusEditor
     if (this._subElementEditorAlert) return this._renderSubElementEditorAlert();
     if (this._subElementEditorSensor)
       return this._renderSubElementEditorSensor();
+//    if (this._subElementEditorPopup) return this._renderSubElementEditorPopup();
 
     return html`
       <ha-form
@@ -914,10 +945,26 @@ export class AreaCardPlusEditor
             @value-changed=${this._valueChanged}
           ></ha-form>
         </div>
+      
       </ha-expansion-panel>
     `;
   }
 
+  /*
+
+<!--
+          <popup-items-editor
+            .hass=${this.hass}
+            .customization_popup=${this._config.customization_popup}
+            .SelectOptions=${this.AllSelectOptions}
+            @edit-item=${this._edit_itemPopup}
+            @config-changed=${this._customizationChangedPopup}
+          >
+          </popup-items-editor>  
+          
+-->    
+  */
+ 
   static styles = css`
     :host {
       display: block;

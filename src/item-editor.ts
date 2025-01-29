@@ -79,11 +79,13 @@ export class ItemEditor extends LitElement {
     },
   ]);
 
+
   protected render(): TemplateResult {
     if (!this.hass || !this.config) {
       return html``;
     }
 
+  
     let schema;
     switch (this.getSchema) {
       case "sensor":
@@ -96,11 +98,11 @@ export class ItemEditor extends LitElement {
         schema = this._schemaalert();
         break;
     }
-
+  
     const data = {
       ...this._config,
     };
-
+  
     return html`
       <ha-form
         .hass=${this.hass}
@@ -111,6 +113,7 @@ export class ItemEditor extends LitElement {
       ></ha-form>
     `;
   }
+  
 
   private _computeLabelCallback = (schema: Schema): string => {
     switch (schema.name) {
@@ -165,6 +168,8 @@ export class ItemEditor extends LitElement {
       })
     );
   }
+
+
 
   static get styles(): CSSResult {
     return css`

@@ -35,6 +35,7 @@ import {
   blankBeforeUnit,
 } from "./helpers";
 import { mdiClose } from "@mdi/js";
+import { parse } from "yaml";
 
 export interface CardConfig extends LovelaceCardConfig {
   area: string;
@@ -828,17 +829,25 @@ export class AreaCardPlus
 
                     const entities = entitiesByDomain[domain];
                     const activeTemperatures = entities
-                      .filter((entity) => {
-                        const hvacAction = entity.attributes.hvac_action;
-                        const isActive =
-                          !UNAVAILABLE_STATES.includes(entity.state) &&
-                          !STATES_OFF.includes(entity.state);
-                        const isHeatingCooling =
-                          hvacAction &&
-                          (hvacAction !== "idle" || hvacAction === "off");
-
-                        return isActive || isHeatingCooling;
-                      })
+                    .filter((entity) => {
+                      const hvacAction = entity.attributes.hvac_action;
+                      const state = entity.state;
+          
+                      const isActive =
+                        !UNAVAILABLE_STATES.includes(state) &&
+                        !STATES_OFF.includes(state);
+          
+                      if (hvacAction !== undefined) {
+                        const isHeatingCooling = hvacAction !== "idle" && hvacAction !== "off";
+          
+                        const isHeatButIdle =
+                          state === "heat" && (hvacAction === "idle" || hvacAction === "off");
+          
+                        return isActive && isHeatingCooling && !isHeatButIdle;
+                      }
+          
+                      return isActive;
+                    })
                       .map((entity) => {
                         const temperature =
                           entity.attributes.temperature || "N/A";
@@ -1040,14 +1049,21 @@ export class AreaCardPlus
   }
 
   createCard(cardConfig: { type: string; entity: string; [key: string]: any }) {
-    const cardElement = document.createElement(
-      `hui-${cardConfig.type}-card`
-    ) as LovelaceCard;
+    let cardElement: LovelaceCard;
+  
+    if (cardConfig.type.startsWith('custom:')) {
+      const customType = cardConfig.type.replace('custom:', '');
+      cardElement = document.createElement(customType) as LovelaceCard;
+    } else {
+      cardElement = document.createElement(`hui-${cardConfig.type}-card`) as LovelaceCard;
+    }
+  
     if (cardElement) {
       cardElement.hass = this.hass;
       cardElement.setConfig(cardConfig);
       return cardElement;
     }
+  
     return html`<p>Invalid Configuration for card type: ${cardConfig.type}</p>`;
   }
 
@@ -1066,6 +1082,10 @@ export class AreaCardPlus
     this._showPopup = false;
   }
 
+
+
+  
+
   private renderPopup(): TemplateResult {
     const entitiesByArea = this._entitiesByArea(
       this._config!.area,
@@ -1073,10 +1093,10 @@ export class AreaCardPlus
       this._entities!,
       this.hass.states
     );
-
+  
     const area = this._area(this._config!.area, this._areas!);
     let columns = this._config?.columns ? this._config.columns : 4;
-
+  
     const entitiesToRender: Record<string, HassEntity[]> = this
       ._selectedDeviceClass
       ? {
@@ -1090,7 +1110,7 @@ export class AreaCardPlus
       : this._selectedDomain
       ? { [this._selectedDomain]: entitiesByArea[this._selectedDomain] || [] }
       : entitiesByArea;
-
+  
     let maxEntityCount = 0;
     Object.entries(entitiesToRender).forEach(([domain, entities]) => {
       const entityCount = entities.length;
@@ -1098,14 +1118,14 @@ export class AreaCardPlus
         maxEntityCount = entityCount;
       }
     });
-
+  
     if (maxEntityCount === 1) columns = 1;
     else if (maxEntityCount === 2) columns = Math.min(columns, 2);
     else if (maxEntityCount === 3) columns = Math.min(columns, 3);
     else columns = Math.min(columns, 4);
-
+  
     this.style.setProperty("--columns", columns.toString());
-
+  
     return html`
       <ha-dialog
         id="more-info-dialog"
@@ -1124,7 +1144,7 @@ export class AreaCardPlus
             <h3>${this._config?.area_name || area?.name}</h3>
           </div>
         </div>
-
+  
         <div class="tile-container">
           ${Object.entries(entitiesToRender).map(
             ([domain, entities]) => html`
@@ -1136,82 +1156,111 @@ export class AreaCardPlus
                 </h4>
                 <div class="domain-entities">
                   ${entities.map(
-                    (entity: HassEntity) => html`
-                      <div class="entity-card">
-                        ${this.createCard({
-                          type: "tile",
-                          entity: entity.entity_id,
-                          ...(domain === "alarm_control_panel" && {
-                            features: [
-                              {
-                                type: "alarm-modes",
-                                modes: [
-                                  "armed_home",
-                                  "armed_away",
-                                  "armed_night",
-                                  "armed_vacation",
-                                  "armed_custom_bypass",
-                                  "disarmed",
-                                ],
-                              },
-                            ],
-                          }),
-                          ...(domain === "light" && {
-                            features: [{ type: "light-brightness" }],
-                          }),
-                          ...(domain === "cover" && {
-                            features: [
-                              { type: "cover-open-close" },
-                              { type: "cover-position" },
-                            ],
-                          }),
-                          ...(domain === "vacuum" && {
-                            features: [
-                              {
-                                type: "vacuum-commands",
-                                commands: [
-                                  "start_pause",
-                                  "stop",
-                                  "clean_spot",
-                                  "locate",
-                                  "return_home",
-                                ],
-                              },
-                            ],
-                          }),
-                          ...(domain === "climate" && {
-                            features: [
-                              {
-                                type: "climate-hvac-modes",
-                                hvac_modes: [
-                                  "auto",
-                                  "heat_cool",
-                                  "heat",
-                                  "cool",
-                                  "dry",
-                                  "fan_only",
-                                  "off",
-                                ],
-                              },
-                            ],
-                          }),
-                          ...(domain === "media_player" && {
-                            features: [{ type: "media-player-volume-slider" }],
-                          }),
-                          ...(domain === "lock" && {
-                            features: [{ type: "lock-commands" }],
-                          }),
-                          ...(domain === "fan" && {
-                            features: [{ type: "fan-speed" }],
-                          }),
-                          ...(domain === "update" && {
-                            features: [
-                              { type: "update-actions", backup: "ask" },
-                            ],
-                          }),
-                        })}
-                      </div>
-                    `
+                    (entity: HassEntity) => {
+                      // Überprüfen, ob eine benutzerdefinierte Kartenkonfiguration für diese Domäne existiert
+                      const customization = this._config?.customization_popup?.find(
+                        (c: any) => c.type === domain
+                      );
+
+let cardType: string | undefined;
+let cardFeatures: Record<string, any> | undefined = undefined;
+
+if (customization?.card) {
+  try {
+    // Parsing der Card-Konfiguration
+    const parsedCard = parse(customization.card);
+    cardType = parsedCard.type;
+    
+    // Restliche Konfiguration ohne den 'type' extrahieren
+    const { type, ...restOfCard } = parsedCard;
+    cardFeatures = restOfCard;
+  } catch (e) {
+    console.error('Error parsing card configuration:', e);
+  }
+}
+  
+                      // Standardkarte erstellen, falls keine benutzerdefinierte Konfiguration vorhanden ist
+                      const cardConfig = cardType
+                        ? { type: cardType, entity: entity.entity_id, ...cardFeatures }
+                        : {
+                            type: "tile",
+                            entity: entity.entity_id,
+                            ...(domain === "alarm_control_panel" && {
+                              features: [
+                                {
+                                  type: "alarm-modes",
+                                  modes: [
+                                    "armed_home",
+                                    "armed_away",
+                                    "armed_night",
+                                    "armed_vacation",
+                                    "armed_custom_bypass",
+                                    "disarmed",
+                                  ],
+                                },
+                              ],
+                            }),
+                            ...(domain === "light" && {
+                              features: [{ type: "light-brightness" }],
+                            }),
+                            ...(domain === "cover" && {
+                              features: [
+                                { type: "cover-open-close" },
+                                { type: "cover-position" },
+                              ],
+                            }),
+                            ...(domain === "vacuum" && {
+                              features: [
+                                {
+                                  type: "vacuum-commands",
+                                  commands: [
+                                    "start_pause",
+                                    "stop",
+                                    "clean_spot",
+                                    "locate",
+                                    "return_home",
+                                  ],
+                                },
+                              ],
+                            }),
+                            ...(domain === "climate" && {
+                              features: [
+                                {
+                                  type: "climate-hvac-modes",
+                                  hvac_modes: [
+                                    "auto",
+                                    "heat_cool",
+                                    "heat",
+                                    "cool",
+                                    "dry",
+                                    "fan_only",
+                                    "off",
+                                  ],
+                                },
+                              ],
+                            }),
+                            ...(domain === "media_player" && {
+                              features: [{ type: "media-player-volume-slider" }],
+                            }),
+                            ...(domain === "lock" && {
+                              features: [{ type: "lock-commands" }],
+                            }),
+                            ...(domain === "fan" && {
+                              features: [{ type: "fan-speed" }],
+                            }),
+                            ...(domain === "update" && {
+                              features: [
+                                { type: "update-actions", backup: "ask" },
+                              ],
+                            }),
+                          };
+  
+                      return html`
+                        <div class="entity-card">
+                          ${this.createCard(cardConfig)}
+                        </div>
+                      `;
+                    }
                   )}
                 </div>
               </div>
@@ -1397,6 +1446,25 @@ export class AreaCardPlus
           width: 100%;
           overflow: hidden; 
         }
+        ha-card {
+        overflow: hidden;
+        position: relative;
+        background-size: cover;
+        height: auto;
+        min-height: 165px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+              .icon-container ha-icon {
+        --mdc-icon-size: 55px;
+        color: var(--sidebar-selected-icon-color);
+      } 
+              .name {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
 }
 
 
