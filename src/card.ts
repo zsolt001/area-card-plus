@@ -852,7 +852,7 @@ export class AreaCardPlus
                       .map((entity) => {
                         const temperature =
                           entity.attributes.temperature || "N/A";
-                        return `${temperature}°C`;
+                        return `${temperature} ${this.hass?.config?.unit_system?.temperature || ""}`;
                       });
 
                     if (activeTemperatures.length === 0) {

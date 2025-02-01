@@ -89,7 +89,7 @@
               </div>
             </div>
             <div class="climate text-small off" >
-            ${(null===(o=null===(i=this._config)||void 0===i?void 0:i.toggle_domains)||void 0===o?void 0:o.includes("climate"))?yi.map((e=>{if(!(e in r))return"";const t=r[e].filter((e=>{const t=e.attributes.hvac_action,s=e.state,n=!fi.includes(s)&&!pi.includes(s);return void 0!==t?n&&"idle"!==t&&"off"!==t&&!("heat"===s&&("idle"===t||"off"===t)):n})).map((e=>`${e.attributes.temperature||"N/A"}°C`));return 0===t.length?"":F`
+            ${(null===(o=null===(i=this._config)||void 0===i?void 0:i.toggle_domains)||void 0===o?void 0:o.includes("climate"))?yi.map((e=>{if(!(e in r))return"";const t=r[e].filter((e=>{const t=e.attributes.hvac_action,s=e.state,n=!fi.includes(s)&&!pi.includes(s);return void 0!==t?n&&"idle"!==t&&"off"!==t&&!("heat"===s&&("idle"===t||"off"===t)):n})).map((e=>{var t,s,n;return`${e.attributes.temperature||"N/A"} ${(null===(n=null===(s=null===(t=this.hass)||void 0===t?void 0:t.config)||void 0===s?void 0:s.unit_system)||void 0===n?void 0:n.temperature)||""}`}));return 0===t.length?"":F`
                       <div
                         class="climate"
                         @click=${t=>this._toggle(t,e)}
