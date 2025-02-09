@@ -572,10 +572,17 @@ export class AreaCardPlus
       <div class="content">
           <div class="icon-container">
             <ha-icon style=${
-              this._config?.area_icon_color
-                ? `color: var(--${this._config.area_icon_color}-color);`
-                : nothing
-            } icon=${this._config.area_icon || area.icon}></ha-icon>
+              `${this._config?.area_icon_color ? `color: var(--${this._config.area_icon_color}-color);` : ""} 
+              ${this._config?.icon_css
+                ? this._config.icon_css
+                    .split("\n")
+                    .map((line: string) => line.trim())
+                    .filter((line: string) => line && line.includes(":"))
+                    .map((line: string) => (line.endsWith(";") ? line : `${line};`))
+                    .join(" ")
+                : ""}`}
+              icon=${this._config.area_icon || area.icon}>
+            </ha-icon>
           </div>
           <div class="container" @click="${() => this._handleClick()}">
 
@@ -608,11 +615,18 @@ export class AreaCardPlus
 
                 return activeCount > 0
                   ? html`
-                      <div
-                        class="icon-with-count"
-                        @click=${(ev: Event) =>
-                          this._toggle(ev, domain, deviceClass)}
-                      >
+                     <div
+                      class="icon-with-count"
+                      style=${this._config?.alert_css
+                        ? this._config.alert_css
+                            .split("\n") 
+                            .map((line: string) => line.trim()) 
+                            .filter((line: string) => line && line.includes(":")) 
+                            .map((line: string) => (line.endsWith(";") ? line : `${line};`)) 
+                            .join(" ") 
+                        : ""}
+                      @click=${(ev: Event) => this._toggle(ev, domain, deviceClass)}
+                    >
                         <ha-state-icon
                           class="alert"
                           style=${alertColor
@@ -669,10 +683,18 @@ export class AreaCardPlus
 
                     if (activeCount > 0) {
                       return html`
-                        <div
-                          class="icon-with-count hover"
-                          @click=${(ev: Event) => this._toggle(ev, domain)}
-                        >
+                          <div
+                            class="icon-with-count hover"
+                            style=${this._config?.domain_css
+                              ? this._config.domain_css
+                                  .split("\n") 
+                                  .map((line: string) => line.trim()) 
+                                  .filter((line: string) => line && line.includes(":")) 
+                                  .map((line: string) => (line.endsWith(";") ? line : `${line};`)) 
+                                  .join(" ") 
+                              : ""}
+                            @click=${(ev: Event) => this._toggle(ev, domain)}
+                          >
                           <ha-state-icon
                             style=${domainColor
                               ? `color: var(--${domainColor}-color);`
@@ -727,10 +749,18 @@ export class AreaCardPlus
                     const activeCount = activeEntities.length;
 
                     return html`
-                      <div
-                        class="icon-with-count hover"
-                        @click=${(ev: Event) => this._toggle(ev, domain)}
-                      >
+                    <div
+                      class="icon-with-count hover"
+                      style=${this._config?.domain_css
+                        ? this._config.domain_css
+                            .split("\n") 
+                            .map((line: string) => line.trim()) 
+                            .filter((line: string) => line && line.includes(":")) 
+                            .map((line: string) => (line.endsWith(";") ? line : `${line};`)) 
+                            .join(" ") 
+                        : ""}
+                      @click=${(ev: Event) => this._toggle(ev, domain)}
+                    >
                         <ha-state-icon
                           style=${domainColor
                             ? `color: var(--${domainColor}-color);`
@@ -763,12 +793,18 @@ export class AreaCardPlus
           <div class="bottom">
             <div>
               <div style=${
-                this._config?.area_name_color
-                  ? `color: var(--${this._config.area_name_color}-color);`
-                  : nothing
-              } class="name text-large on">${
-      this._config.area_name || area.name
-    }</div>
+                `${this._config?.area_name_color ? `color: var(--${this._config.area_name_color}-color);` : ""} ${this._config?.name_css
+                  ? this._config.name_css
+                      .split("\n")
+                      .map((line: string) => line.trim())
+                      .filter((line: string) => line && line.includes(":"))
+                      .map((line: string) => (line.endsWith(";") ? line : `${line};`))
+                      .join(" ")
+                  : ""}`}
+                class="name text-large on">
+                ${this._config.area_name || area.name}
+              </div>
+
               <div class="sensors">
                 ${SENSOR_DOMAINS.map((domain) => {
                   if (!(domain in entitiesByDomain)) {
@@ -1297,10 +1333,11 @@ if (customization?.card) {
         left: unset;
         right: 16px;
       }
-      .icon-container ha-icon {
-        --mdc-icon-size: 60px;
-        color: var(--sidebar-selected-icon-color);
-      }    
+      @supports (--row-size: 1) {
+        .icon-container ha-icon {
+          --mdc-icon-size: calc(var(--row-size, 3) * 20px);
+        }
+      }
       .container {
         display: flex;
         flex-direction: row;

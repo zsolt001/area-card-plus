@@ -115,6 +115,15 @@ export class AreaCardPlusEditor
           },
         },
         { name: "mirrored", selector: { boolean: { } } },
+        {
+          name: "css",
+          flatten: true,
+          type: "expandable",
+          icon: "mdi:palette",
+          schema: [ 
+            { name: "icon_css", selector: { template: {} } },
+            { name: "name_css", selector: { template: {} } },
+          ], },
       ],
     },
   ]);
@@ -135,6 +144,7 @@ export class AreaCardPlusEditor
       name: "alert_color",
       selector: { ui_color: { default_color: "state", include_state: true } },
     },
+    { name: "alert_css", selector: { template: {} } },
   ]);
 
   private _sensorschema = memoizeOne((sensorClasses: SelectOption[]) => [
@@ -171,6 +181,7 @@ export class AreaCardPlusEditor
       name: "domain_color",
       selector: { ui_color: { default_color: "state", include_state: true } },
     },
+    { name: "domain_css", selector: { template: {} } },
     { name: "show_active", selector: { boolean: {} } },
   ]);
 
@@ -526,6 +537,16 @@ export class AreaCardPlusEditor
           " " +
           this.hass!.localize(`ui.panel.lovelace.editor.card.tile.color`)
         );
+      case "css":
+        return "CSS";            
+      case "domain_css":
+        return "Domain CSS";  
+      case "alert_css":
+        return "Alert CSS";      
+      case "icon_css":
+        return "Icon CSS";    
+      case "name_css":
+        return "Name CSS";                                      
       case "mirrored":
         return "Mirror Card Layout";
       case "alert_color":
