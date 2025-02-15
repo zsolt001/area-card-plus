@@ -927,6 +927,15 @@ export class AreaCardPlus
       return;
     }
 
+    const dialog = this.renderRoot?.querySelector("ha-dialog"); // Holt das ha-dialog direkt aus dem gerenderten Output
+    const container = document.querySelector("home-assistant")?.shadowRoot;
+    
+    if (dialog && dialog.parentElement !== container) {
+      container?.appendChild(dialog);
+    }
+    
+        
+    
     const oldHass = changedProps.get("hass") as HomeAssistant | undefined;
     const oldConfig = changedProps.get("_config") as CardConfig | undefined;
 
@@ -1117,11 +1126,113 @@ export class AreaCardPlus
 
   private _closeDialog(): void {
     this._showPopup = false;
+  
+    const container = document.querySelector("home-assistant")?.shadowRoot;
+    const dialog = container?.querySelector("ha-dialog"); // Dialog direkt im neuen Container finden
+    
+    if (dialog && container?.contains(dialog)) {
+      container.removeChild(dialog);
+    }
+  }
+  
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    // Initiale Prüfung
+    this._updateIsMobile();
+    window.addEventListener("resize", this._updateIsMobile.bind(this));
   }
 
+  disconnectedCallback(): void {
+    window.removeEventListener("resize", this._updateIsMobile.bind(this));
+    super.disconnectedCallback();
+  }
 
+  private _updateIsMobile(): void {
+    this._isMobile = window.innerWidth <= 768;
+  }
 
-  
+  private desktopStyles = `
+  .tile-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .domain-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .domain-group h4 {
+    margin: 0;
+    font-size: 1.2em;
+  }
+  .domain-entities {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), 1fr);
+    gap: 4px;
+  }
+  .entity-card {
+    width: 22.5vw;
+  }
+  .dialog-header { 
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+  }
+  .dialog-header ha-icon-button { 
+    margin-right: 10px;  
+  }
+  ha-dialog#more-info-dialog {
+    --mdc-dialog-max-width: calc(22.5vw * var(--columns) + 3vw);
+    overflow: hidden;
+  }
+`;
+
+// Mobile CSS als String
+private mobileStyles = `
+  .tile-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .domain-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .domain-group h4 {
+    margin: 0;
+    font-size: 1.2em;
+  }
+  .domain-entities {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 4px;
+  }
+  .dialog-header { 
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+  }    
+  .entity-card {
+    flex-basis: 100%;
+    width: 100% !important;
+    overflow: hidden;
+  }
+  ha-dialog#more-info-dialog {
+    --mdc-dialog-min-width: 96vw;
+    --mdc-dialog-max-width: 96vw;
+    --columns: 1;
+    max-width: 100%;
+    padding: 16px;
+    overflow: hidden;
+  }
+`;
 
   private renderPopup(): TemplateResult {
     const entitiesByArea = this._entitiesByArea(
@@ -1162,14 +1273,19 @@ export class AreaCardPlus
     else columns = Math.min(columns, 4);
   
     this.style.setProperty("--columns", columns.toString());
+
+    const styleBlock = this._isMobile ? this.mobileStyles : this.desktopStyles;
   
     return html`
       <ha-dialog
-        id="more-info-dialog"
+      id="more-info-dialog"
         style="--columns: ${columns};"
         open
         @closed="${this._closeDialog}"
       >
+         <style>
+          ${styleBlock}
+        </style>
         <div class="dialog-header">
           <ha-icon-button
             slot="navigationIcon"
@@ -1304,7 +1420,7 @@ if (customization?.card) {
             `
           )}
         </div>
-      </ha-dialog>
+      </ha-dialog> 
     `;
   }
 
@@ -1428,58 +1544,8 @@ if (customization?.card) {
       .text-large {
         font-size: 1.3em;
       }  
-      .dialog-header { 
-        display: flex;
-        gap: 8px;
-        margin-bottom: 12px;
-        align-items: center;
-      } 
-      .dialog-header ha-icon-button { 
-        margin-right: 10px;  
-      }
-      ha-dialog#more-info-dialog {
-        --mdc-dialog-max-width: calc(22.5vw * var(--columns) + 3vw); }
-        overflow: hidden; 
-      }
 
-      .tile-container {
-        display: flex;
-        flex-direction: column; 
-        gap: 16px; 
-      }
-
-      .domain-group {
-        display: flex;
-        flex-direction: column; 
-        gap: 8px; 
-        margin-top: 8px;
-      }
-
-      .domain-group h4 {
-        margin: 0;
-        font-size: 1.2em;
-      }
-
-      .domain-entities {
-        display: grid;
-        grid-template-columns: repeat(var(--columns), 1fr);
-        gap: 8px; 
-      }
-
-      .entity-card {
-        width: 22.5vw;
-      }
       @media (max-width: 768px) {
-        ha-dialog#more-info-dialog {
-          --columns: 1; 
-          max-width: 100%;
-          padding: 16px;
-        }
-
-        .domain-entities {
-          grid-template-columns: 1fr; 
-        }
-
         .content {
           padding: 16px;
           display: flex;
@@ -1487,13 +1553,7 @@ if (customization?.card) {
           justify-content: space-between;    
           min-height: 140px;    
         }  
-
-        .entity-card {
-          flex-basis: 100%; 
-          width: 100%;
-          overflow: hidden; 
-        }
-              .name {
+        .name {
         font-weight: bold;
         margin-bottom: 5px;
       }

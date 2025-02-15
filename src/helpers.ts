@@ -9,7 +9,6 @@ import { createCollection } from "home-assistant-js-websocket";
 import type { Store } from "home-assistant-js-websocket/dist/store";
 import type { PropertyValues, ReactiveElement } from "lit";
 import { property } from "lit/decorators.js";
-import { CardConfig } from "./card";
 
 export interface SubElementConfig {
   index?: number;
