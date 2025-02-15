@@ -88,7 +88,10 @@ customization_popup:
       show_color_temp_control: true
       use_light_color: true
 ```
+### Changing CSS for some items
+You can change most things like icon, name of area and alert/toggle domains (border, color, size etc.)
 
+![image](https://github.com/user-attachments/assets/aced58a6-f4c8-481e-93f1-c227e05de080)
 
 
 </details>
