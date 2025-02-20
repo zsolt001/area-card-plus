@@ -2,6 +2,8 @@
 [![forks - status-card](https://img.shields.io/github/forks/xBourner/area-card?style=for-the-badge)](https://github.com/xBourner/area-card)
 [![GitHub release](https://img.shields.io/github/release/xBourner/area-card?style=for-the-badge)](https://github.com/xBourner/area-card/releases/)
 [![GitHub issues](https://img.shields.io/github/issues/xBourner/area-card?style=for-the-badge)](https://github.com/xBourner/area-card/issues)
+
+<a href="https://www.buymeacoffee.com/bourner"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bourner&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
 # area-card-plus
 
 #### An Area card for your Home Assistant Dashboard
