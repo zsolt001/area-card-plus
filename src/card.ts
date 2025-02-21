@@ -608,7 +608,7 @@ export class AreaCardPlus
                 const customization = this._config?.customization_alert?.find(
                   (item: { type: string }) => item.type === deviceClass
                 );
-                const alertColor = customization?.color;
+                const alertColor = customization?.color || this._config?.alert_color;;
                 const alertIcon = customization?.icon;
 
                 const activeCount = activeEntities.length;
@@ -629,11 +629,7 @@ export class AreaCardPlus
                     >
                         <ha-state-icon
                           class="alert"
-                          style=${alertColor
-                            ? `color: var(--${alertColor}-color);`
-                            : this._config?.alert_color
-                            ? `color: ${this._config.alert_color};`
-                            : nothing}
+                          style=${alertColor ? `color: var(--${alertColor}-color);` : nothing}
                           .icon=${alertIcon
                             ? alertIcon
                             : this._getIcon(
@@ -671,7 +667,7 @@ export class AreaCardPlus
                       this._config?.customization_domain?.find(
                         (item: { type: string }) => item.type === domain
                       );
-                    const domainColor = customization?.color;
+                    const domainColor = customization?.color || this._config?.domain_color;
                     const domainIcon = customization?.icon;
 
                     const activeEntities = entitiesByDomain[domain].filter(
@@ -696,11 +692,7 @@ export class AreaCardPlus
                             @click=${(ev: Event) => this._toggle(ev, domain)}
                           >
                           <ha-state-icon
-                            style=${domainColor
-                              ? `color: var(--${domainColor}-color);`
-                              : this._config?.domain_color
-                              ? `color: ${this._config.domain_color};`
-                              : nothing}
+                            style=${domainColor ? `color: var(--${domainColor}-color);` : nothing}
                             class=${activeCount > 0
                               ? "toggle-on"
                               : "toggle-off"}

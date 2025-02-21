@@ -16,15 +16,15 @@
           <div class="right">
 
           <div class="alerts">
-            ${gi.map((e=>e in c?this._deviceClasses[e].map((t=>{var s,n,i,o;const r=c[e].filter((e=>(e.attributes.device_class||"default")===t&&"on"===e.state)),a=null===(n=null===(s=this._config)||void 0===s?void 0:s.customization_alert)||void 0===n?void 0:n.find((e=>e.type===t)),l=null==a?void 0:a.color,u=null==a?void 0:a.icon,h=r.length;return h>0?F`
+            ${gi.map((e=>e in c?this._deviceClasses[e].map((t=>{var s,n,i,o;const r=c[e].filter((e=>(e.attributes.device_class||"default")===t&&"on"===e.state)),a=null===(n=null===(s=this._config)||void 0===s?void 0:s.customization_alert)||void 0===n?void 0:n.find((e=>e.type===t)),l=(null==a?void 0:a.color)||(null===(i=this._config)||void 0===i?void 0:i.alert_color),u=null==a?void 0:a.icon,h=r.length;return h>0?F`
                      <div
                       class="icon-with-count"
-                      style=${(null===(i=this._config)||void 0===i?void 0:i.alert_css)?this._config.alert_css.split("\n").map((e=>e.trim())).filter((e=>e&&e.includes(":"))).map((e=>e.endsWith(";")?e:`${e};`)).join(" "):""}
+                      style=${(null===(o=this._config)||void 0===o?void 0:o.alert_css)?this._config.alert_css.split("\n").map((e=>e.trim())).filter((e=>e&&e.includes(":"))).map((e=>e.endsWith(";")?e:`${e};`)).join(" "):""}
                       @click=${s=>this._toggle(s,e,t)}
                     >
                         <ha-state-icon
                           class="alert"
-                          style=${l?`color: var(--${l}-color);`:(null===(o=this._config)||void 0===o?void 0:o.alert_color)?`color: ${this._config.alert_color};`:V}
+                          style=${l?`color: var(--${l}-color);`:V}
                           .icon=${u||this._getIcon(e,h>0,t)}
                         ></ha-state-icon>
                         <span
@@ -36,14 +36,14 @@
           </div>          
 
           <div class="buttons">
-            ${this._config.show_active?null===(s=this._config.toggle_domains)||void 0===s?void 0:s.map((e=>{var t,s,n,i;if(!(e in c))return V;if("climate"===e)return V;const o=null===(s=null===(t=this._config)||void 0===t?void 0:t.customization_domain)||void 0===s?void 0:s.find((t=>t.type===e)),r=null==o?void 0:o.color,a=null==o?void 0:o.icon,l=c[e].filter((e=>!fi.includes(e.state)&&!pi.includes(e.state))).length;return l>0?F`
+            ${this._config.show_active?null===(s=this._config.toggle_domains)||void 0===s?void 0:s.map((e=>{var t,s,n,i;if(!(e in c))return V;if("climate"===e)return V;const o=null===(s=null===(t=this._config)||void 0===t?void 0:t.customization_domain)||void 0===s?void 0:s.find((t=>t.type===e)),r=(null==o?void 0:o.color)||(null===(n=this._config)||void 0===n?void 0:n.domain_color),a=null==o?void 0:o.icon,l=c[e].filter((e=>!fi.includes(e.state)&&!pi.includes(e.state))).length;return l>0?F`
                           <div
                             class="icon-with-count hover"
-                            style=${(null===(n=this._config)||void 0===n?void 0:n.domain_css)?this._config.domain_css.split("\n").map((e=>e.trim())).filter((e=>e&&e.includes(":"))).map((e=>e.endsWith(";")?e:`${e};`)).join(" "):""}
+                            style=${(null===(i=this._config)||void 0===i?void 0:i.domain_css)?this._config.domain_css.split("\n").map((e=>e.trim())).filter((e=>e&&e.includes(":"))).map((e=>e.endsWith(";")?e:`${e};`)).join(" "):""}
                             @click=${t=>this._toggle(t,e)}
                           >
                           <ha-state-icon
-                            style=${r?`color: var(--${r}-color);`:(null===(i=this._config)||void 0===i?void 0:i.domain_color)?`color: ${this._config.domain_color};`:V}
+                            style=${r?`color: var(--${r}-color);`:V}
                             class=${l>0?"toggle-on":"toggle-off"}
                             .domain=${e}
                             .icon=${a||this._getIcon(e,l>0)}
