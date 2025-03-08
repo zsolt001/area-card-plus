@@ -1393,6 +1393,12 @@ if (customization?.card) {
                             ...(domain === "fan" && {
                               features: [{ type: "fan-speed" }],
                             }),
+                            ...(domain === "switch" && {
+                              features: [{ type: "toggle" }],
+                            }),
+                            ...(domain === "counter" && {
+                              features: [{ type: "counter-actions", actions: ["increment", "decrement", "reset"] }],
+                            }),                            
                             ...(domain === "update" && {
                               features: [
                                 { type: "update-actions", backup: "ask" },
