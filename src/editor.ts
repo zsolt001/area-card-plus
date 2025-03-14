@@ -200,6 +200,15 @@ export class AreaCardPlusEditor
       },
     },
     {
+      name: "edit_filters",
+      flatten: true,
+      type: "expandable",
+      icon: "mdi:eye-plus",
+      schema: [
+        { name: "label", selector: { label: {multiple: true} } },
+      ],
+    },    
+    {
       name: "hidden_entities",
       flatten: true,
       type: "expandable",
@@ -607,6 +616,12 @@ export class AreaCardPlusEditor
             `component.binary_sensor.entity_component._.state.off`
           )
         );
+        case "edit_filters":
+          return  this.hass!.localize(`ui.panel.lovelace.editor.common.edit`) + " " + this.hass!.localize(`ui.components.subpage-data-table.filters`);
+        case "label_filter":
+          return this.hass!.localize("ui.components.label-picker.label") + " " + this.hass!.localize("ui.components.related-filter-menu.filter");
+        case "label":
+          return this.hass!.localize("ui.components.label-picker.label");        
       default:
         return this.hass!.localize(
           `ui.panel.lovelace.editor.card.area.${schema.name}`

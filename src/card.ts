@@ -205,22 +205,33 @@ export class AreaCardPlus
       states: HomeAssistant["states"]
     ) => {
       const hiddenEntities = this._config?.hidden_entities || [];
+      const configLabels = this._config?.label; // Neue Variable: Labels aus der Konfiguration
+  
       const entitiesInArea = registryEntities
-        .filter(
-          (entry) =>
+        .filter((entry) => {
+          // Falls in _config.labels Werte vorhanden sind, prüfen wir, ob das Entity eines dieser Labels besitzt.
+          if (configLabels && configLabels.length > 0) {
+            const matchesLabel =
+              entry.labels?.some((l) => configLabels.includes(l)) ?? false;
+            if (!matchesLabel) {
+              return false;
+            }
+          }
+          return (
             !entry.hidden_by &&
             (entry.area_id
               ? entry.area_id === areaId
               : entry.device_id && devicesInArea.has(entry.device_id))
-        )
+          );
+        })
         .map((entry) => entry.entity_id)
         .filter((entity) => !hiddenEntities.includes(entity));
-
+  
       const entitiesByDomain: { [domain: string]: HassEntity[] } = {};
-
+  
       for (const entity of entitiesInArea) {
         const domain = computeDomain(entity);
-
+  
         if (
           !TOGGLE_DOMAINS.includes(domain) &&
           !SENSOR_DOMAINS.includes(domain) &&
@@ -229,30 +240,29 @@ export class AreaCardPlus
         ) {
           continue;
         }
-
+  
         const stateObj: HassEntity | undefined = states[entity];
         if (!stateObj) {
           continue;
         }
-
+  
         if (
           (ALERT_DOMAINS.includes(domain) || SENSOR_DOMAINS.includes(domain)) &&
-          !deviceClasses[domain].includes(
-            stateObj.attributes.device_class || ""
-          )
+          !deviceClasses[domain].includes(stateObj.attributes.device_class || "")
         ) {
           continue;
         }
-
+  
         if (!(domain in entitiesByDomain)) {
           entitiesByDomain[domain] = [];
         }
         entitiesByDomain[domain].push(stateObj);
       }
-
+  
       return entitiesByDomain;
     }
   );
+  
 
   private _entitiesByArea = memoizeOne(
     (
