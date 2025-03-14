@@ -274,15 +274,30 @@ export class AreaCardPlus
       const popupDomains = this._config?.popup_domains || [];
       const hiddenEntities = this._config?.hidden_entities || [];
       const extraEntities = this._config?.extra_entities || [];
-
+      const configLabels = this._config?.label || [];
+  
       const entitiesInArea = registryEntities
-        .filter(
-          (entry) =>
-            !entry.hidden_by &&
-            (entry.area_id
-              ? entry.area_id === areaId
-              : entry.device_id && devicesInArea.has(entry.device_id))
-        )
+        .filter((entry) => {
+          // Standardfilter: nicht versteckt und in der richtigen Area bzw. Device-Zuordnung
+          if (entry.hidden_by) return false;
+          if (entry.area_id) {
+            if (entry.area_id !== areaId) return false;
+          } else if (entry.device_id && !devicesInArea.has(entry.device_id)) {
+            return false;
+          }
+          // Label-Prüfung: Falls in der Config Labels angegeben sind,
+          // wird geprüft, ob der Registry-Eintrag ein entsprechendes Label besitzt.
+          if (configLabels && configLabels.length > 0) {
+            const matchesLabel =
+              entry.labels?.some((l) => configLabels.includes(l))
+              // Falls du zusätzlich auch Geräte-Labels prüfen möchtest und Zugriff auf das Device hast,
+              // könnte hier noch eine Prüfung ergänzt werden:
+              // || (device?.labels?.some((l) => configLabels.includes(l)) ?? false)
+              ;
+            if (!matchesLabel) return false;
+          }
+          return true;
+        })
         .map((entry) => entry.entity_id)
         .filter((entity) => !hiddenEntities.includes(entity))
         .filter(
@@ -290,57 +305,57 @@ export class AreaCardPlus
             !this._config?.hide_unavailable ||
             !UNAVAILABLE_STATES.includes(states[entity]?.state)
         );
-
+  
       const entitiesByArea: { [domain: string]: HassEntity[] } = {};
-
+  
       for (const entity of entitiesInArea) {
         const domain = computeDomain(entity);
-
+  
         if (popupDomains.length > 0 && !popupDomains.includes(domain)) {
           continue;
         }
-
+  
         const stateObj: HassEntity | undefined = states[entity];
         if (!stateObj) {
           continue;
         }
-
+  
         if (!(domain in entitiesByArea)) {
           entitiesByArea[domain] = [];
         }
         entitiesByArea[domain].push(stateObj);
       }
-
+  
       for (const extraEntity of extraEntities) {
         const domain = computeDomain(extraEntity);
-
+  
         if (!(domain in entitiesByArea)) {
           entitiesByArea[domain] = [];
         }
-
+  
         const stateObj: HassEntity | undefined = states[extraEntity];
         if (stateObj) {
           entitiesByArea[domain].push(stateObj);
         }
       }
-
+  
       const sortOrder = popupDomains.length > 0 ? popupDomains : domainOrder;
-
+  
       const sortedEntitiesByArea = Object.entries(entitiesByArea)
         .sort(([domainA], [domainB]) => {
           const indexA = sortOrder.indexOf(domainA);
           const indexB = sortOrder.indexOf(domainB);
-
+  
           const adjustedIndexA = indexA === -1 ? sortOrder.length : indexA;
           const adjustedIndexB = indexB === -1 ? sortOrder.length : indexB;
-
+  
           return adjustedIndexA - adjustedIndexB;
         })
         .reduce((acc, [domain, entities]) => {
           const sortedEntities = entities.sort((a, b) => {
             const stateA = a.state;
             const stateB = b.state;
-
+  
             const getGroup = (state: string) => {
               if (
                 !STATES_OFF.includes(state) &&
@@ -356,24 +371,25 @@ export class AreaCardPlus
                 return 2;
               }
             };
-
+  
             const groupA = getGroup(stateA);
             const groupB = getGroup(stateB);
-
+  
             if (groupA !== groupB) {
               return groupA - groupB;
             }
-
+  
             return a.entity_id.localeCompare(b.entity_id);
           });
-
+  
           acc[domain] = sortedEntities;
           return acc;
         }, {} as { [domain: string]: HassEntity[] });
-
+  
       return sortedEntitiesByArea;
     }
   );
+  
 
   private _isOn(domain: string, deviceClass?: string): HassEntity | undefined {
     const entities = this._entitiesByDomain(
