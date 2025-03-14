@@ -207,24 +207,19 @@ export class AreaCardPlus
       const hiddenEntities = this._config?.hidden_entities || [];
       const configLabels = this._config?.label || [];
       const entitiesInArea = registryEntities
-      .filter((entry) => {
-        // Prüfe, ob der Eintrag nicht versteckt ist und im richtigen Area/Device liegt:
-        if (entry.hidden_by) return false;
-        if (entry.area_id) {
-          if (entry.area_id !== areaId) return false;
-        } else if (entry.device_id && !devicesInArea.has(entry.device_id)) {
-          return false;
-        }
-        // Falls in der Config Labels definiert sind, prüfe, ob der Eintrag eines der Labels besitzt.
-        if (configLabels.length > 0) {
-          if (!entry.labels || !entry.labels.some((l) => configLabels.includes(l))) {
-            return false;
-          }
-        }
-        return true;
-      })
-      .map((entry) => entry.entity_id)
-      .filter((entity) => !hiddenEntities.includes(entity));
+        .filter(
+          (entry) =>
+            !entry.hidden_by &&
+            (entry.area_id
+              ? entry.area_id === areaId
+              : entry.device_id && devicesInArea.has(entry.device_id)) &&
+              (
+                !this._config?.label ||
+                (entry.labels && entry.labels.some((l) => this._config?.label.includes(l)))
+              )
+        )
+        .map((entry) => entry.entity_id)
+        .filter((entity) => !hiddenEntities.includes(entity));
 
       const entitiesByDomain: { [domain: string]: HassEntity[] } = {};
 
