@@ -485,7 +485,7 @@ interface ActionHandlerElement extends HTMLElement {
     options: ActionHandlerOptions;
     start?: (ev: Event) => void;
     end?: (ev: Event) => void;
-    handleEnter?: (ev: KeyboardEvent) => void;
+    handleKeyDown?: (ev: KeyboardEvent) => void;
   };
 }
 
@@ -497,96 +497,185 @@ export interface ActionHandlerOptions {
 
 class ActionHandler extends HTMLElement implements ActionHandlerMock {
   public holdTime = 500;
+
   protected timer?: number;
+
   protected held = false;
+
+  private cancelled = false;
+
   private dblClickTimeout?: number;
 
-  public bind(element: ActionHandlerElement, options: ActionHandlerOptions = {}) {
-    if (element.actionHandler && deepEqual(options, element.actionHandler.options)) {
+  public connectedCallback() {
+
+    [
+      "touchcancel",
+      "mouseout",
+      "mouseup",
+      "touchmove",
+      "mousewheel",
+      "wheel",
+      "scroll",
+    ].forEach((ev) => {
+      document.addEventListener(
+        ev,
+        () => {
+          this.cancelled = true;
+          if (this.timer) {
+            this._stopAnimation();
+            clearTimeout(this.timer);
+            this.timer = undefined;
+          }
+        },
+        { passive: true }
+      );
+    });
+  }
+
+  public bind(
+    element: ActionHandlerElement,
+    options: ActionHandlerOptions = {}
+  ) {
+    if (
+      element.actionHandler &&
+      deepEqual(options, element.actionHandler.options)
+    ) {
       return;
     }
-    
-    // Entferne vorhandene Listener, falls vorhanden
+
     if (element.actionHandler) {
-      element.removeEventListener('click', element.actionHandler.end!);
-      element.removeEventListener('mousedown', element.actionHandler.start!);
-      element.removeEventListener('touchstart', element.actionHandler.start!);
-      element.removeEventListener('mouseup', element.actionHandler.end!);
-      element.removeEventListener('touchend', element.actionHandler.end!);
+      element.removeEventListener("touchstart", element.actionHandler.start!);
+      element.removeEventListener("touchend", element.actionHandler.end!);
+      element.removeEventListener("touchcancel", element.actionHandler.end!);
+
+      element.removeEventListener("mousedown", element.actionHandler.start!);
+      element.removeEventListener("click", element.actionHandler.end!);
+
+      element.removeEventListener(
+        "keydown",
+        element.actionHandler.handleKeyDown!
+      );
+    } else {
+      element.addEventListener("contextmenu", (ev: Event) => {
+        const e = ev || window.event;
+        if (e.preventDefault) {
+          e.preventDefault();
+        }
+        if (e.stopPropagation) {
+          e.stopPropagation();
+        }
+        e.cancelBubble = true;
+        e.returnValue = false;
+        return false;
+      });
     }
+
     element.actionHandler = { options };
-    
+
     if (options.disabled) {
       return;
     }
-    
-    // Start-Listener: Wird bei mousedown / touchstart aufgerufen
-    element.actionHandler.start = (ev: Event): void => {
-      // Prüfen, ob es sich um einen Linksklick handelt
-      if (ev instanceof MouseEvent && ev.button !== 0) {
-        return; // Bei Rechtsklick (button=2) oder Mittelklick (button=1) abbrechen
+
+    element.actionHandler.start = (ev: Event) => {
+      this.cancelled = false;
+      let x: number;
+      let y: number;
+      if ((ev as TouchEvent).touches) {
+        x = (ev as TouchEvent).touches[0].clientX;
+        y = (ev as TouchEvent).touches[0].clientY;
+      } else {
+        x = (ev as MouseEvent).clientX;
+        y = (ev as MouseEvent).clientY;
       }
-      
-      // Setze held auf false und starte den Timer, falls Hold unterstützt wird
-      this.held = false;
+
       if (options.hasHold) {
+        this.held = false;
         this.timer = window.setTimeout(() => {
+          this._startAnimation(x, y);
           this.held = true;
         }, this.holdTime);
       }
     };
-    
-    element.actionHandler.end = (ev: Event): void => {
-      // Prüfen, ob es sich um einen Linksklick handelt
-      if (ev instanceof MouseEvent && ev.button !== 0) {
-        return; // Bei Rechtsklick (button=2) oder Mittelklick (button=1) abbrechen
+
+    element.actionHandler.end = (ev: Event) => {
+      // Don't respond when moved or scrolled while touch
+      if (
+        ev.type === "touchcancel" ||
+        (ev.type === "touchend" && this.cancelled)
+      ) {
+        return;
       }
-      
-      const target = element;
+      const target = ev.target as HTMLElement;
+      // Prevent mouse event if touch event
       if (ev.cancelable) {
         ev.preventDefault();
       }
-      
-      // Timer für Hold-Aktion löschen
-      clearTimeout(this.timer);
-      this.timer = undefined;
-      
-      // Falls hold aktiviert war und der Timer abgelaufen ist, gilt das als Hold
-      if (options.hasHold && this.held) {
-        fireEvent(target, 'action', { action: 'hold' });
-        return; // Wichtig: Early return um keine weitere Aktion auszulösen
+      if (options.hasHold) {
+        clearTimeout(this.timer);
+        this._stopAnimation();
+        this.timer = undefined;
       }
-      
-      // Double-Click-Logik nur für click-Events
-      if (options.hasDoubleClick && ev.type === 'click') {
-        if (!this.dblClickTimeout) {
-          // Erster Klick - warte auf möglichen zweiten Klick
+      if (options.hasHold && this.held) {
+        fireEvent(target, "action", { action: "hold" });
+      } else if (options.hasDoubleClick) {
+        if (
+          (ev.type === "click" && (ev as MouseEvent).detail < 2) ||
+          !this.dblClickTimeout
+        ) {
           this.dblClickTimeout = window.setTimeout(() => {
             this.dblClickTimeout = undefined;
-            fireEvent(target, 'action', { action: 'tap' });
+            fireEvent(target, "action", { action: "tap" });
           }, 250);
         } else {
-          // Zweiter Klick innerhalb des Timeouts - lösche Timeout und triggere double_tap
           clearTimeout(this.dblClickTimeout);
           this.dblClickTimeout = undefined;
-          fireEvent(target, 'action', { action: 'double_tap' });
+          fireEvent(target, "action", { action: "double_tap" });
         }
-      } else if (!options.hasDoubleClick) {
-        // Wenn kein Double-Click konfiguriert ist, immer tap auslösen
-        fireEvent(target, 'action', { action: 'tap' });
+      } else {
+        fireEvent(target, "action", { action: "tap" });
       }
     };
-    
-    // Listener hinzufügen
-    element.addEventListener('mousedown', element.actionHandler.start, { passive: true });
-    element.addEventListener('touchstart', element.actionHandler.start, { passive: true });
-    element.addEventListener('mouseup', element.actionHandler.end);
-    element.addEventListener('touchend', element.actionHandler.end);
-    element.addEventListener('click', element.actionHandler.end);
+
+    element.actionHandler.handleKeyDown = (ev: KeyboardEvent) => {
+      if (!["Enter", " "].includes(ev.key)) {
+        return;
+      }
+      (ev.currentTarget as ActionHandlerElement).actionHandler!.end!(ev);
+    };
+
+    element.addEventListener("touchstart", element.actionHandler.start, {
+      passive: true,
+    });
+    element.addEventListener("touchend", element.actionHandler.end);
+    element.addEventListener("touchcancel", element.actionHandler.end);
+
+    element.addEventListener("mousedown", element.actionHandler.start, {
+      passive: true,
+    });
+    element.addEventListener("click", element.actionHandler.end);
+
+    element.addEventListener("keydown", element.actionHandler.handleKeyDown);
+  }
+
+  private _startAnimation(x: number, y: number) {
+    Object.assign(this.style, {
+      left: `${x}px`,
+      top: `${y}px`,
+      transform: "translate(-50%, -50%) scale(1)",
+    });
+  }
+
+  private _stopAnimation() {
+    Object.assign(this.style, {
+      left: null,
+      top: null,
+      transform: "translate(-50%, -50%) scale(0)",
+    });
   }
 }
 
-customElements.define('action-handler-area-card', ActionHandler);
+customElements.define("action-handler-area-card", ActionHandler);
+
 
 const getActionHandler = (): ActionHandler => {
   const body = document.body;
