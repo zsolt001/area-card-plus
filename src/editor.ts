@@ -14,7 +14,8 @@ import {
   SubElementConfig,
   Settings,
   fireEvent,
-  EntityRegistryEntry
+  EntityRegistryEntry,
+  UiAction
 } from "./helpers";
 import {
   DEVICE_CLASSES,
@@ -75,31 +76,66 @@ export class AreaCardPlusEditor
     undefined;
   @state() private _subElementEditorSensor: SubElementConfig | undefined =
     undefined;
- //   @state() private _subElementEditorPopup: SubElementConfig | undefined =
- //   undefined;
+ //   @state() private _subElementEditorPopup: SubElementConfig | undefined = undefined;
 
-    
 
-  private _schema = memoizeOne(() => [
+
+  private _schema = memoizeOne((showCamera: boolean) => {
+      const actions: UiAction[] = ["more-info", "navigate", "url", "perform-action", "none"];
+      const localize = (key: string) => this.hass!.localize(key) || key;
+
+      const icons = [
+        { value: "icon", label: localize("ui.panel.lovelace.editor.card.generic.icon") },
+        { value: "image", label: localize("ui.components.selectors.image.image") },
+        { 
+          value: "icon + image", 
+          label: `${localize("ui.panel.lovelace.editor.card.generic.icon")} & ${localize("ui.components.selectors.image.image")}` 
+        },
+      ];
+      return [
     { name: "area", selector: { area: {} } },
+    { name: "show_camera", required: false, selector: { boolean: {} } },
+    ...(showCamera
+      ? ([
+          {
+            name: "camera_view",
+            selector: { select: { options: ["auto", "live"] } },
+          },
+        ] as const)
+      : []),
     {
       name: "",
       type: "grid",
       schema: [
         {
-          name: "navigation_path",
-          required: false,
-          selector: { navigation: {} },
-        },
+          name: "tap_action",
+          selector: { ui_action: {actions} },
+        },    
+
         { name: "theme", required: false, selector: { theme: {} } },
       ],
     },
+    {
+      name: "",
+      type: "grid",
+      schema: [
+        {
+          name: "double_tap_action",
+          selector: { ui_action: {actions} },
+        },    
+        {
+          name: "hold_action",
+          selector: { ui_action: {actions} },
+        },    
+      ],
+    },    
     {
       name: "appearance",
       flatten: true,
       type: "expandable",
       icon: "mdi:palette",
       schema: [
+        { name: "show_icon", selector: { select: {options: icons, mode: "dropdown"} } },
         { name: "area_icon", selector: { icon: {} } },
         {
           name: "area_icon_color",
@@ -126,7 +162,8 @@ export class AreaCardPlusEditor
           ], },
       ],
     },
-  ]);
+  ];
+});
 
   private _binaryschema = memoizeOne((binaryClasses: SelectOption[]) => [
     {
@@ -444,6 +481,9 @@ export class AreaCardPlusEditor
 
         this._config.toggle_domains = [...sortedToggleDomains];
         this._config.popup_domains = [...sortedDomains];
+        this._config.customization_domain = [];
+        this._config.customization_alert = [];
+        this._config.customization_sensor = [];
 
         this.requestUpdate();
       }
@@ -621,7 +661,14 @@ export class AreaCardPlusEditor
         case "label_filter":
           return this.hass!.localize("ui.components.label-picker.label") + " " + this.hass!.localize("ui.components.related-filter-menu.filter");
         case "label":
-          return this.hass!.localize("ui.components.label-picker.label");        
+          return this.hass!.localize("ui.components.label-picker.label");   
+        case "show_icon":
+        case "tap_action":
+        case "hold_action":
+        case "double_tap_action":
+          return this.hass!.localize(
+                `ui.panel.lovelace.editor.card.generic.${schema.name}`
+          );       
       default:
         return this.hass!.localize(
           `ui.panel.lovelace.editor.card.area.${schema.name}`
@@ -860,7 +907,7 @@ export class AreaCardPlusEditor
 
     const possibleDomains = this._allDomainsForArea(this._config.area || "");
 
-    const schema = this._schema();
+    const schema = this._schema(this._config.show_camera || false)
 
     const binaryschema = this._binaryschema(this.binarySelectOptions);
 
