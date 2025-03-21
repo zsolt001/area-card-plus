@@ -27,6 +27,8 @@ To make sure this card will work like it should please check if your relevant en
 ### Card Features
 
 - based on default HA area card with more features and customization
+- show camera view/area picture/area icon or camera + icon/ area picture + area icon
+- added tap_action, double_tap_action and hold_action everywhere you can click
 - shows toggle domains (the ones on the right) which can be toggled to on/off
 - shows alert entities (motion, door, window) next to toggle domains
 - shows sensor entities (temperatur, humidity etc.) under the area icon
@@ -47,9 +49,10 @@ Below are some screenshots that show what can be done.
 <summary>Click to see full options to customize</summary>
   <br>
   
-#### Change area icon, area icon color, area name & area name color
+#### Change icon/image, area icon, area icon color, area name, area name color, mirror card layout
 
-![image](https://github.com/user-attachments/assets/6749c4a2-abbc-43ee-a1d4-427eecd94c4b)
+![image](https://github.com/user-attachments/assets/ac1c4f24-cfca-40c0-9e62-8b05399516e9)
+
 
 #### Choose domain/device to show
 Here you can choose which domain/device class will be shown in the card. <br>
@@ -73,11 +76,14 @@ These will allow you to edit and customize each domain/device class the way you 
   
 ![image](https://github.com/user-attachments/assets/f9f28ada-7361-472b-93ff-08e5504df409)
 
-#### Change tap action, icon or color
-Tap action can be choosen between none (nothing happens on click), toggle (click will toggle all entitiies from that domain in your area) or popup (will open popup view for only that domain in your area) <br>
+#### Change tap_action, double_tap action, hold_action icon or color
+You can choose between the default HA actions [more-info, toggle, navigate, URL, perform-action, nothing] <br>
+Toggle will toggle all entities of the clicked domain assigned to your area, more-info will show all entities of the clicked domain. <br>
+Evenrything else has default behavior. <br>
 You can select an individual icon & color for each domain if you want
 
-![image](https://github.com/user-attachments/assets/1348ea8b-fecf-43a7-9261-493755174ce1)
+![image](https://github.com/user-attachments/assets/645b325d-7b93-448b-b0ca-6e340998feea)
+
 
 ### Change card in the popup view
 This feature is experimental and YAML only (for now)
@@ -118,7 +124,17 @@ All settings are optional. The card should work without setting any parameters i
 
 ```yaml
 type: custom:area-card-plus    ### type of the card
-area: living-room              ### choose your area 
+area: living-room              ### choose your area
+show_camera: true              ### choose if you want to show a camera entity
+camera_view: live              ### choose camera mode
+theme: sand                    ### choose your theme
+tap_action:                    ### choose tap_action
+  action: more-info
+double_tap_action:             ### choose double_tap_action
+  action: more-info
+hold_action:                   ### choose hold_action
+  action: more-info
+mirrored: true                 ### lets you mirror the card layout
 alert_classes:                 ### choose the alert classes (motion & window are default)
   - motion
   - window
@@ -134,6 +150,7 @@ columns: 4                     ### how many columns will be shown in popup view
 customization_domain: []       ### choose the customization for toggle_domains
 customization_alert: []        ### choose the customization for alert_domains
 customization_sensor: []       ### choose the customization for sensor_domains
+hide_unavailable: true         ### only shows entities that are NOT in state "unavilable"
 ```
 
 # Feedback
