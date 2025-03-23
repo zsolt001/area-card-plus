@@ -78,6 +78,7 @@ const ALERT_DOMAINS = ["binary_sensor"];
 export const CLIMATE_DOMAINS = ["climate"];
 
 export const TOGGLE_DOMAINS = [
+  "cover",
   "light",
   "switch",
   "fan",
