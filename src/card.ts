@@ -819,7 +819,7 @@ export class AreaCardPlus
     }
 
     const ignoreAspectRatio = this.layout === "grid";
-    const layout = this._config.layout === "vertical";
+    const layout = this._config.layout === "horizontal";
 
     return html`
       <ha-card class="${classMap(classes)}" style="${styleMap({

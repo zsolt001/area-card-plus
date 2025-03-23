@@ -158,7 +158,7 @@ export class AreaCardPlusEditor
           selector: {
             select: {
               mode: "box",
-              options: ["horizontal", "vertical"].map((value) => ({
+              options: [ "vertical", "horizontal"].map((value) => ({
                 label: localize(
                   `ui.panel.lovelace.editor.card.tile.content_layout_options.${value}`
                 ),
