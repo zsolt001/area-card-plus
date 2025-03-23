@@ -23,11 +23,17 @@ To make sure this card will work like it should please check if your relevant en
 
 ![image](https://github.com/user-attachments/assets/f27c7847-abf3-43c6-a868-14f949af5113)
 
+Vetical Mode:
+
+![image](https://github.com/user-attachments/assets/61d2b972-db16-44fb-b5c4-ce9b5e88a3f8)
+
+
 
 ### Card Features
 
 - based on default HA area card with more features and customization
 - show camera view/area picture/area icon or camera + icon/ area picture + area icon
+- works in section and mansonry view
 - added tap_action, double_tap_action and hold_action everywhere you can click
 - shows toggle domains (the ones on the right) which can be toggled to on/off
 - shows alert entities (motion, door, window) next to toggle domains
@@ -151,6 +157,7 @@ customization_domain: []       ### choose the customization for toggle_domains
 customization_alert: []        ### choose the customization for alert_domains
 customization_sensor: []       ### choose the customization for sensor_domains
 hide_unavailable: true         ### only shows entities that are NOT in state "unavilable"
+layout: vertical               ### choose horizontal/vertical layout (vertical works best in section view smaller 3)
 ```
 
 # Feedback
