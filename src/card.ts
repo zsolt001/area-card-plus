@@ -1737,8 +1737,8 @@ export class AreaCardPlus
         color: var(--primary-color);
       }
       .icon-container.row {
-        align-self: anchor-center;
-        top: 0;
+        top: 50%;
+        transform: translateY(-50%);
       }        
       .mirrored .icon-container {
         left: unset;
@@ -1771,8 +1771,8 @@ export class AreaCardPlus
         gap: 7px;
       }
       .right.row {
-        top: 0;      
-        align-self: anchor-center; 
+        top: 50%;
+        transform: translateY(-50%);
       }  
       .mirrored .right {
         right: unset;
@@ -1808,10 +1808,11 @@ export class AreaCardPlus
       .bottom.row {
         flex-direction: row;
         left: calc(var(--row-size, 3) * 20px + 25px);
-        bottom: 0px;
+        bottom: auto;
         gap: 5px;
         align-items: baseline;
-        align-self: anchor-center;
+        top: 50%;
+        transform: translateY(-50%);
       }
       .mirrored .bottom {
         left: unset;
