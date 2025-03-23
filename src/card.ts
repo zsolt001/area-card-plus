@@ -8,6 +8,7 @@ import {
 } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 import memoizeOne from "memoize-one";
 import {
   HomeAssistant,
@@ -35,8 +36,9 @@ import {
   isNumericState,
   blankBeforeUnit,
   actionHandler,
-  HassCustomElement,
+  LovelaceGridOptions,
 } from "./helpers";
+import parseAspectRatio from "./helpers";
 import { mdiClose } from "@mdi/js";
 import { parse } from "yaml";
 
@@ -184,6 +186,8 @@ const DOMAIN_ICONS = {
   },
 };
 
+export const DEFAULT_ASPECT_RATIO = "16:5";
+
 @customElement("area-card-plus")
 export class AreaCardPlus
   extends SubscribeMixin(LitElement)
@@ -199,6 +203,8 @@ export class AreaCardPlus
   }
 
   @property({ attribute: false }) public hass!: HomeAssistant;
+  @property({ attribute: false })
+  public layout?: string;
 
   @state() private _config?: CardConfig;
 
@@ -206,6 +212,12 @@ export class AreaCardPlus
   @state() private _devices?: DeviceRegistryEntry[];
   @state() private _entities?: EntityRegistryEntry[];
   @state() private _showPopup: boolean = false;
+
+
+  private _ratio: {
+    w: number;
+    h: number;
+  } | null = null;
 
   private _deviceClasses: { [key: string]: string[] } = DEVICE_CLASSES;
 
@@ -482,6 +494,27 @@ export class AreaCardPlus
     return 3;
   }
 
+  public willUpdate(changedProps: PropertyValues) {
+    if (changedProps.has("_config") || this._ratio === null) {
+      this._ratio = this._config?.aspect_ratio
+        ? parseAspectRatio(this._config?.aspect_ratio)
+        : null;
+
+      if (this._ratio === null || this._ratio.w <= 0 || this._ratio.h <= 0) {
+        this._ratio = parseAspectRatio(DEFAULT_ASPECT_RATIO);
+      }
+    }
+  }
+
+  getGridOptions(): LovelaceGridOptions {
+    return {
+      columns: 12,
+      rows: 3,
+      min_columns: 1,
+      min_rows: 1,
+    };
+  }
+
   public setConfig(config: CardConfig): void {
     if (!config.area) {
       throw new Error("Area Required");
@@ -556,69 +589,9 @@ export class AreaCardPlus
     return false;
   }
 
-  private _actionEventProcessed = false;
-
-  private _processActionEvent(
-    ev: ActionHandlerEvent,
-    handlerType: string,
-    domain?: string,
-    deviceClass?: string
-  ): void {
-    ev.preventDefault();
-
-    if (this._actionEventProcessed) {
-      return;
-    }
-
-    this._actionEventProcessed = true;
-
-    setTimeout(() => {
-      this._actionEventProcessed = false;
-    }, 100);
-
-    switch (handlerType) {
-      case "domain":
-        this._executeDomainAction(ev, domain!);
-        break;
-      case "sensor":
-        this._executeSensorAction(ev, domain!, deviceClass);
-        break;
-      case "alert":
-        this._executeAlertAction(ev, domain!, deviceClass);
-        break;
-      case "general":
-        this._executeGeneralAction(ev);
-        break;
-      default:
-        break;
-    }
-  }
-
   private _handleAction(ev: ActionHandlerEvent) {
-    this._processActionEvent(ev, "general");
-  }
+    console.log(`Action: ${ev.detail.action} auf content`);
 
-  private _handleDomainAction(ev: ActionHandlerEvent, domain: string): void {
-    this._processActionEvent(ev, "domain", domain);
-  }
-
-  private _handleSensorAction(
-    ev: ActionHandlerEvent,
-    domain: string,
-    deviceClass?: string
-  ): void {
-    this._processActionEvent(ev, "sensor", domain, deviceClass);
-  }
-
-  private _handleAlertAction(
-    ev: ActionHandlerEvent,
-    domain: string,
-    deviceClass?: string
-  ): void {
-    this._processActionEvent(ev, "alert", domain, deviceClass);
-  }
-
-  private _executeGeneralAction(ev: ActionHandlerEvent): void {
     const actionConfig =
       ev.detail.action === "tap"
         ? this._config?.tap_action
@@ -643,135 +616,162 @@ export class AreaCardPlus
     handleAction(this, this.hass!, this._config!, ev.detail.action!);
   }
 
-  private _executeDomainAction(ev: ActionHandlerEvent, domain: string): void {
-    const customization = this._config?.customization_domain?.find(
-      (item: { type: string }) =>
-        item.type.toLowerCase() === domain.toLowerCase()
-    );
+  private _handleDomainAction(domain: string): (ev: CustomEvent) => void {
+    return (ev: CustomEvent) => {
+      ev.stopPropagation();
+      const action = ev.detail.action;
+      console.log(`Action: ${action} für Domain: ${domain}`);
 
-    const actionConfig =
-      ev.detail.action === "tap"
-        ? customization?.tap_action
-        : ev.detail.action === "hold"
-        ? customization?.hold_action
-        : ev.detail.action === "double_tap"
-        ? customization?.double_tap_action
-        : null;
+      const customization = this._config?.customization_domain?.find(
+        (item: { type: string }) => item.type === domain
+      );
 
-    const isToggle =
-      actionConfig === "toggle" || actionConfig?.action === "toggle";
-    const isMoreInfo =
-      actionConfig === "more-info" || actionConfig?.action === "more-info";
+      const actionConfig =
+        ev.detail.action === "tap"
+          ? customization?.tap_action
+          : ev.detail.action === "hold"
+          ? customization?.hold_action
+          : ev.detail.action === "double_tap"
+          ? customization?.double_tap_action
+          : null;
 
-    if (isToggle) {
-      console.debug("Executing toggle action for", domain);
-      if (domain === "media_player") {
-        this.hass.callService(
-          domain,
-          this._isOn(domain) ? "media_pause" : "media_play",
-          undefined,
-          { area_id: this._config!.area }
-        );
-      } else if (domain === "lock") {
-        this.hass.callService(
-          domain,
-          this._isOn(domain) ? "lock" : "unlock",
-          undefined,
-          { area_id: this._config!.area }
-        );
-      } else if (domain === "vacuum") {
-        this.hass.callService(
-          domain,
-          this._isOn(domain) ? "stop" : "start",
-          undefined,
-          { area_id: this._config!.area }
-        );
-      } else if (TOGGLE_DOMAINS.includes(domain)) {
-        this.hass.callService(
-          domain,
-          this._isOn(domain) ? "turn_off" : "turn_on",
-          undefined,
-          { area_id: this._config!.area }
-        );
-      }
-      return;
-    } else if (isMoreInfo || actionConfig === undefined) {
-      if (domain !== "binary_sensor" && domain !== "sensor") {
-        if (domain === "climate") {
-          if (isMoreInfo) {
+      const isToggle =
+        actionConfig === "toggle" || actionConfig?.action === "toggle";
+      const isMoreInfo =
+        actionConfig === "more-info" || actionConfig?.action === "more-info";
+
+      if (isToggle) {
+        if (domain === "media_player") {
+          this.hass.callService(
+            domain,
+            this._isOn(domain) ? "media_pause" : "media_play",
+            undefined,
+            { area_id: this._config!.area }
+          );
+        } else if (domain === "lock") {
+          this.hass.callService(
+            domain,
+            this._isOn(domain) ? "lock" : "unlock",
+            undefined,
+            { area_id: this._config!.area }
+          );
+        } else if (domain === "vacuum") {
+          this.hass.callService(
+            domain,
+            this._isOn(domain) ? "stop" : "start",
+            undefined,
+            { area_id: this._config!.area }
+          );
+        } else if (TOGGLE_DOMAINS.includes(domain)) {
+          this.hass.callService(
+            domain,
+            this._isOn(domain) ? "turn_off" : "turn_on",
+            undefined,
+            { area_id: this._config!.area }
+          );
+        }
+        return;
+      } else if (isMoreInfo || actionConfig === undefined) {
+        if (domain !== "binary_sensor" && domain !== "sensor") {
+          if (domain === "climate") {
+            if (isMoreInfo) {
+              this._showPopupForDomain(domain);
+            }
+          } else {
             this._showPopupForDomain(domain);
           }
-        } else {
-          this._showPopupForDomain(domain);
         }
+        return;
       }
-      return;
-    }
 
-    handleAction(this, this.hass!, customization, ev.detail.action!);
+      const config = {
+        tap_action: customization?.tap_action,
+        hold_action: customization?.hold_action,
+        double_tap_action: customization?.double_tap_action,
+      };
+
+      handleAction(this, this.hass!, config, ev.detail.action!);
+    };
   }
 
-  private _executeSensorAction(
-    ev: ActionHandlerEvent,
+  private _handleAlertAction(
     domain: string,
-    deviceClass?: string
-  ): void {
-    const customization = this._config?.customization_sensor?.find(
-      (item: { type: string }) =>
-        item.type.toLowerCase() === deviceClass?.toLowerCase()
-    );
+    deviceClass: string
+  ): (ev: CustomEvent) => void {
+    return (ev: CustomEvent) => {
+      ev.stopPropagation();
 
-    const actionConfig =
-      ev.detail.action === "tap"
-        ? customization?.tap_action
-        : ev.detail.action === "hold"
-        ? customization?.hold_action
-        : ev.detail.action === "double_tap"
-        ? customization?.double_tap_action
-        : null;
+      const customization = this._config?.customization_alert?.find(
+        (item: { type: string }) => item.type === deviceClass
+      );
 
-    const isMoreInfo =
-      actionConfig === "more-info" || actionConfig?.action === "more-info";
+      const actionConfig =
+        ev.detail.action === "tap"
+          ? customization?.tap_action
+          : ev.detail.action === "hold"
+          ? customization?.hold_action
+          : ev.detail.action === "double_tap"
+          ? customization?.double_tap_action
+          : null;
 
-    if (isMoreInfo) {
-      if (domain === "sensor") {
-        this._showPopupForDomain(domain, deviceClass);
+      const isMoreInfo =
+        actionConfig === "more-info" || actionConfig?.action === "more-info";
+
+      if (isMoreInfo || actionConfig === undefined) {
+        if (domain === "binary_sensor") {
+          this._showPopupForDomain(domain, deviceClass);
+        }
+        return;
       }
-      return;
-    }
-    handleAction(this, this.hass!, customization, ev.detail.action!);
+
+      const config = {
+        tap_action: customization?.tap_action,
+        hold_action: customization?.hold_action,
+        double_tap_action: customization?.double_tap_action,
+      };
+
+      handleAction(this, this.hass!, config, ev.detail.action!);
+    };
   }
 
-  private _executeAlertAction(
-    ev: ActionHandlerEvent,
+  private _handleSensorAction(
     domain: string,
-    deviceClass?: string
-  ): void {
-    const customization = this._config?.customization_alert?.find(
-      (item: { type: string }) =>
-        item.type.toLowerCase() === deviceClass?.toLowerCase()
-    );
+    deviceClass: string
+  ): (ev: CustomEvent) => void {
+    return (ev: CustomEvent) => {
+      ev.stopPropagation();
 
-    const actionConfig =
-      ev.detail.action === "tap"
-        ? customization?.tap_action
-        : ev.detail.action === "hold"
-        ? customization?.hold_action
-        : ev.detail.action === "double_tap"
-        ? customization?.double_tap_action
-        : null;
+      const customization = this._config?.customization_sensor?.find(
+        (item: { type: string }) => item.type === deviceClass
+      );
 
-    const isMoreInfo =
-      actionConfig === "more-info" || actionConfig?.action === "more-info";
+      const actionConfig =
+        ev.detail.action === "tap"
+          ? customization?.tap_action
+          : ev.detail.action === "hold"
+          ? customization?.hold_action
+          : ev.detail.action === "double_tap"
+          ? customization?.double_tap_action
+          : null;
 
-    if (isMoreInfo || actionConfig === undefined) {
-      if (domain === "binary_sensor") {
-        this._showPopupForDomain(domain, deviceClass);
+      const isMoreInfo =
+        actionConfig === "more-info" || actionConfig?.action === "more-info";
+
+      if (isMoreInfo) {
+        if (domain === "sensor") {
+          this._showPopupForDomain(domain, deviceClass);
+        }
+        return;
       }
-      return;
-    }
 
-    handleAction(this, this.hass!, customization, ev.detail.action!);
+      const config = {
+        tap_action: customization?.tap_action,
+        hold_action: customization?.hold_action,
+        double_tap_action: customization?.double_tap_action,
+      };
+
+      handleAction(this, this.hass!, config, ev.detail.action!);
+    };
   }
 
   protected render() {
@@ -818,8 +818,15 @@ export class AreaCardPlus
       `;
     }
 
+    const ignoreAspectRatio = this.layout === "grid";
+    const layout = this._config.layout === "vertical";
+
     return html`
-      <ha-card class="${classMap(classes)}" style="position: relative;">
+      <ha-card class="${classMap(classes)}" style="${styleMap({
+        paddingBottom: ignoreAspectRatio
+          ? "0"
+          : "10em"  
+      })}">
         ${
           (this._config.show_camera && cameraEntityId) ||
           ((this._config.show_icon === "image" ||
@@ -840,7 +847,10 @@ export class AreaCardPlus
             : nothing
         }
         <div class="content">
-          <div class="icon-container">
+          <div class="${classMap({
+            "icon-container": true,
+            row: layout, 
+          })}">
             ${
               showIcon
                 ? html`
@@ -870,18 +880,24 @@ export class AreaCardPlus
                 : nothing
             }
           </div>
-          <div class="container" @action=${(ev: ActionHandlerEvent) =>
-            this._handleAction(ev)}
-                          .actionHandler=${actionHandler({
-                            hasHold: hasAction(this._config?.hold_action),
-                            hasDoubleClick: hasAction(
-                              this._config?.double_tap_action
-                            ),
-                          })}">
+          <div class="container"             @action=${this._handleAction}
+            .actionHandler=${actionHandler({
+              hasTap: hasAction(this._config.tap_action) || 
+              (this._config.tap_action && this._config.tap_action.action === "more-info") || 
+              !this._config?.tap_action,
+              hasHold: hasAction(this._config.hold_action),
+              hasDoubleClick: hasAction(this._config.double_tap_action),
+            })}>
 
-          <div class="right">
+          <div class="${classMap({
+            right: true,
+            row: layout, 
+          })}">
 
-          <div class="alerts">
+          <div class="${classMap({
+            alerts: true,
+            row: layout, 
+          })}">
             ${ALERT_DOMAINS.map((domain) => {
               if (!(domain in entitiesByDomain)) {
                 return nothing;
@@ -923,8 +939,7 @@ export class AreaCardPlus
                               )
                               .join(" ")
                           : ""}
-                        @action=${(ev: ActionHandlerEvent) =>
-                          this._handleAlertAction(ev, domain, deviceClass)}
+                        @action=${this._handleAlertAction(domain, deviceClass)}
                         .actionHandler=${actionHandler({
                           hasHold: hasAction(customization?.hold_action),
                           hasDoubleClick: hasAction(
@@ -958,7 +973,10 @@ export class AreaCardPlus
             })}
           </div>          
 
-          <div class="buttons">
+          <div class="${classMap({
+            buttons: true,
+            row: layout, 
+          })}">
             ${
               this._config.show_active
                 ? this._config.toggle_domains?.map((domain: string) => {
@@ -1001,9 +1019,9 @@ export class AreaCardPlus
                                 )
                                 .join(" ")
                             : ""}
-                          @action=${(ev: ActionHandlerEvent) =>
-                            this._handleDomainAction(ev, domain)}
+                          @action=${this._handleDomainAction(domain)}
                           .actionHandler=${actionHandler({
+                            hasTap: hasAction(customization?.tap_action) || customization?.tap_action === "more-info" || !customization?.tap_action,
                             hasHold: hasAction(customization?.hold_action),
                             hasDoubleClick: hasAction(
                               customization?.double_tap_action
@@ -1076,9 +1094,9 @@ export class AreaCardPlus
                               )
                               .join(" ")
                           : ""}
-                        @action=${(ev: ActionHandlerEvent) =>
-                          this._handleDomainAction(ev, domain)}
+                        @action=${this._handleDomainAction(domain)}
                         .actionHandler=${actionHandler({
+                          hasTap: hasAction(customization?.tap_action) || customization?.tap_action === "more-info" || !customization?.tap_action,
                           hasHold: hasAction(customization?.hold_action),
                           hasDoubleClick: hasAction(
                             customization?.double_tap_action
@@ -1114,8 +1132,10 @@ export class AreaCardPlus
           </div>
 
           </div>
-          <div class="bottom">
-            <div>
+          <div class="${classMap({
+            bottom: true,
+            row: layout, 
+          })}">
               <div style=${`${
                 this._config?.area_name_color
                   ? `color: var(--${this._config.area_name_color}-color);`
@@ -1132,7 +1152,10 @@ export class AreaCardPlus
                       .join(" ")
                   : ""
               }`}
-                class="name text-large on">
+          <div class="${classMap({
+            name: true,
+            row: layout, 
+          })} text-large on">
                 ${this._config.area_name || area.name}
               </div>
 
@@ -1165,9 +1188,12 @@ export class AreaCardPlus
                       return html`
                         <span
                           class="sensor-value"
-                          @action=${(ev: ActionHandlerEvent) =>
-                            this._handleSensorAction(ev, domain, deviceClass)}
+                          @action=${this._handleSensorAction(
+                            domain,
+                            deviceClass
+                          )}
                           .actionHandler=${actionHandler({
+                            hasTap: hasAction(customization?.tap_action) || customization?.tap_action === "none" || !customization?.tap_action,
                             hasHold: hasAction(customization?.hold_action),
                             hasDoubleClick: hasAction(
                               customization?.double_tap_action
@@ -1192,7 +1218,6 @@ export class AreaCardPlus
                   `;
                 })}
               </div>
-            </div>
             <div class="climate text-small off" >
             ${
               this._config?.toggle_domains?.includes("climate")
@@ -1244,9 +1269,9 @@ export class AreaCardPlus
                     return html`
                       <div
                         class="climate"
-                        @action=${(ev: ActionHandlerEvent) =>
-                          this._handleDomainAction(ev, domain)}
+                        @action=${this._handleDomainAction(domain)}
                         .actionHandler=${actionHandler({
+                          hasTap: hasAction(customization?.tap_action) || customization?.tap_action === "more-info" || !customization?.tap_action,
                           hasHold: hasAction(customization?.hold_action),
                           hasDoubleClick: hasAction(
                             customization?.double_tap_action
@@ -1701,17 +1726,20 @@ export class AreaCardPlus
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 145px;
-        position: relative;
+        
+
         z-index: 1;
       }
       .icon-container {
         position: absolute;
         top: 16px;
         left: 16px;
-        font-size: 64px;
         color: var(--primary-color);
       }
+      .icon-container.row {
+        align-self: anchor-center;
+        top: 0;
+      }        
       .mirrored .icon-container {
         left: unset;
         right: 16px;
@@ -1719,7 +1747,7 @@ export class AreaCardPlus
       @supports (--row-size: 1) {
         .icon-container ha-icon {
           --mdc-icon-size: calc(var(--row-size, 3) * 20px);
-        }
+        } 
       }
       .container {
         display: flex;
@@ -1742,6 +1770,10 @@ export class AreaCardPlus
         right: 8px;
         gap: 7px;
       }
+      .right.row {
+        top: 0;      
+        align-self: anchor-center; 
+      }  
       .mirrored .right {
         right: unset;
         left: 8px;
@@ -1754,10 +1786,16 @@ export class AreaCardPlus
         justify-content: center;
         margin-right: -3px;
       }
+      .alerts.row {
+        flex-direction: row-reverse;
+      }  
       .buttons {
         display: flex;
         flex-direction: column;
         gap: 2px;
+      }
+      .buttons.row {
+        flex-direction: row-reverse;
       }
       .bottom {
         display: flex;
@@ -1766,6 +1804,14 @@ export class AreaCardPlus
         position: absolute;
         bottom: 8px;
         left: 16px;
+      }
+      .bottom.row {
+        flex-direction: row;
+        left: calc(var(--row-size, 3) * 20px + 25px);
+        bottom: 0px;
+        gap: 5px;
+        align-items: baseline;
+        align-self: anchor-center;
       }
       .mirrored .bottom {
         left: unset;
@@ -1777,6 +1823,9 @@ export class AreaCardPlus
         font-weight: bold;
         margin-bottom: 8px;
       }
+      .name.row {
+        margin-bottom: 0;
+      }
       .icon-with-count {
         display: flex;
         align-items: center;
@@ -1786,6 +1835,10 @@ export class AreaCardPlus
         padding: 1px;
         border-radius: 5px;
         --mdc-icon-size: 20px;
+      }
+      .icon-with-count > ha-state-icon,
+      .icon-with-count > span {
+        pointer-events: none;
       }
       .toggle-on {
         color: var(--primary-text-color);
@@ -1813,13 +1866,7 @@ export class AreaCardPlus
       }
 
       @media (max-width: 768px) {
-        .content {
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          min-height: 140px;
-        }
+
         .name {
           font-weight: bold;
           margin-bottom: 5px;

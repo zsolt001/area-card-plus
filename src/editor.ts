@@ -92,6 +92,8 @@ export class AreaCardPlusEditor
           label: `${localize("ui.panel.lovelace.editor.card.generic.icon")} & ${localize("ui.components.selectors.image.image")}` 
         },
       ];
+
+
       return [
     { name: "area", selector: { area: {} } },
     { name: "show_camera", required: false, selector: { boolean: {} } },
@@ -148,6 +150,21 @@ export class AreaCardPlusEditor
           name: "area_name_color",
           selector: {
             ui_color: { default_color: "state", include_state: true },
+          },
+        },
+        {
+          name: "layout",
+          required: true,
+          selector: {
+            select: {
+              mode: "box",
+              options: ["horizontal", "vertical"].map((value) => ({
+                label: localize(
+                  `ui.panel.lovelace.editor.card.tile.content_layout_options.${value}`
+                ),
+                value,
+              })),
+            },
           },
         },
         { name: "mirrored", selector: { boolean: { } } },
@@ -607,7 +624,7 @@ export class AreaCardPlusEditor
       case "appearance":
         return this.hass!.localize(
           `ui.panel.lovelace.editor.card.tile.appearance`
-        );
+        ) || "Appearance";
       case "toggle_domains":
         return this.hass!.localize(
           `ui.panel.lovelace.editor.cardpicker.domain`
